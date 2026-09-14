@@ -35,9 +35,27 @@
 
   <!-- CONTENEDOR PRINCIPAL -->
   <main class="container">
-    <!-- BARRA DE SEMANAS -->
+    <!-- SELECTOR DE FORMATO (SEMANAL VS EMPRESA 2 SEMANAS) -->
+    <div class="format-switcher-container">
+      <button id="btn-fmt-semanal" class="format-tab-btn active" type="button">
+        <span class="tab-icon">📄</span>
+        <span class="tab-text">
+          <strong>Cuaderno Semanal</strong>
+          <small>Formato DUAL-04 (1 Semana)</small>
+        </span>
+      </button>
+      <button id="btn-fmt-empresa" class="format-tab-btn" type="button">
+        <span class="tab-icon">🏢</span>
+        <span class="tab-text">
+          <strong>Informe de Empresa</strong>
+          <small>Formato Quincenal (2 Semanas)</small>
+        </span>
+      </button>
+    </div>
+
+    <!-- BARRA DE SEMANAS / PERIODOS -->
     <div class="weeks-bar">
-      <span class="weeks-label">📅 Seleccionar Semana:</span>
+      <span id="periods-label" class="weeks-label">📅 Seleccionar Semana:</span>
       <div id="weeks-pills-container" class="weeks-pills-scroll"></div>
     </div>
 
@@ -83,14 +101,31 @@
       </div>
     </section>
 
-    <!-- SECCIÓN 2: PLAN SEMANAL DE ROTACIÓN / TAREAS -->
+    <!-- SECCIÓN 2: PLAN SEMANAL / ROTACIÓN DE TAREAS -->
     <section class="card-section">
       <div class="section-head">
-        <h2>2. Plan Semanal de Trabajo — Semana <span id="display-semana-num">1</span></h2>
+        <h2><span id="display-semana-label">2. Plan Semanal de Trabajo — Semana</span> <span id="display-semana-num">1</span></h2>
         <div class="week-date-range">
           <input type="date" id="meta-fecha-inicio" class="form-control range-date-input" title="Inicio de semana" />
           <span class="range-separator">al</span>
           <input type="date" id="meta-fecha-fin" class="form-control range-date-input" title="Fin de semana" />
+        </div>
+      </div>
+
+      <!-- SELECTOR DE SUB-SEMANA (SOLO MODO EMPRESA 2 SEMANAS) -->
+      <div id="empresa-subweeks-bar" class="subweeks-bar" style="display: none;">
+        <div class="subweeks-nav">
+          <span class="subweeks-hint">Editar Días:</span>
+          <button id="btn-subweek-a" class="subweek-btn active" type="button">
+            Semana A (<span id="subweek-a-num">Sem 1</span>)
+          </button>
+          <button id="btn-subweek-b" class="subweek-btn" type="button">
+            Semana B (<span id="subweek-b-num">Sem 2</span>)
+          </button>
+        </div>
+        <div id="quincena-hours-badge" class="quincena-hours-badge">
+          Total Quincena: <strong id="quincena-total-hrs">60 hrs</strong>
+          <span class="quincena-breakdown">(Sem A: <span id="hrs-sem-a">30h</span> | Sem B: <span id="hrs-sem-b">30h</span>)</span>
         </div>
       </div>
 
@@ -146,7 +181,7 @@
     <!-- SECCIÓN 3: INFORME DE LA TAREA MÁS SIGNIFICATIVA -->
     <section class="card-section">
       <div class="section-head">
-        <h2>3. Tarea Más Significativa de la Semana</h2>
+        <h2 id="section-3-title">3. Tarea Más Significativa de la Semana</h2>
       </div>
 
       <!-- ASISTENTE DE PLANTILLAS -->
@@ -156,7 +191,7 @@
       </div>
 
       <div class="form-group" style="margin-bottom: 1rem;">
-        <label>Denominación de la Tarea / Proyecto:</label>
+        <label id="ts-label-titulo">Denominación de la Tarea / Proyecto:</label>
         <input type="text" id="ts-titulo" class="form-control" placeholder="Ej: Implementación de arquitectura de servicios REST con Node.js y Angular" />
       </div>
 
@@ -170,19 +205,57 @@
         <textarea id="ts-seguridad" class="form-control" rows="3" placeholder="Pausas activas, postura ergonómica a 90°, organización de cables, respaldos en Git..."></textarea>
       </div>
 
-      <div class="form-group">
+      <div class="form-group" style="margin-bottom: 1rem;">
         <label>Herramientas, Software y Equipos Utilizados:</label>
         <input type="text" id="ts-herramientas" class="form-control" placeholder="Ej: VS Code, Node.js, Angular, Postman, Git, PostgreSQL, Windows 11." />
+      </div>
+
+      <!-- EVALUACIÓN Y CRITERIOS DEL MONITOR (SOLO MODO EMPRESA 2 SEMANAS) -->
+      <div id="empresa-eval-card" class="empresa-eval-card" style="display: none; margin-top: 1.25rem;">
+        <div class="eval-card-header">
+          <h3>⭐ Evaluación de la Empresa Formadora (Quincenal)</h3>
+        </div>
+        <div class="form-grid-3" style="margin-bottom: 1rem;">
+          <div class="form-group">
+            <label>Asistencia y Puntualidad:</label>
+            <select id="emp-asistencia" class="form-control">
+              <option value="Excelente">Excelente (100% puntualidad)</option>
+              <option value="Bueno">Bueno (Cumplió rol)</option>
+              <option value="Regular">Regular</option>
+            </select>
+          </div>
+          <div class="form-group">
+            <label>Normas de Seguridad y Ergonomía:</label>
+            <select id="emp-seguridad" class="form-control">
+              <option value="Cumple">Cumple estrictamente</option>
+              <option value="Bueno">Bueno</option>
+              <option value="En Proceso">En Proceso</option>
+            </select>
+          </div>
+          <div class="form-group">
+            <label>Desempeño y Calidad Técnica:</label>
+            <select id="emp-calidad" class="form-control">
+              <option value="Excelente">Excelente (Supera expectativas)</option>
+              <option value="Bueno">Bueno (Cumple tareas)</option>
+              <option value="Regular">Regular</option>
+            </select>
+          </div>
+        </div>
+        <div class="form-group">
+          <label>Observaciones y Recomendaciones del Monitor de Empresa:</label>
+          <textarea id="emp-observaciones" class="form-control" rows="2" placeholder="El estudiante demuestra gran compromiso, autonomía técnica y excelente disposición..."></textarea>
+        </div>
       </div>
     </section>
   </main>
 
   <!-- ==================================================== -->
-  <!-- VISTA DE IMPRESIÓN OFICIAL SENATI (SOLO PRINT A4)     -->
+  <!-- VISTAS DE IMPRESIÓN OFICIAL SENATI (SOLO PRINT A4)   -->
   <!-- ==================================================== -->
   <div id="official-print-view">
-    <div class="print-page">
-      <!-- MEMBRETE OFICIAL -->
+
+    <!-- 1. FORMATO DUAL-04: CUADERNO SEMANAL (1 SEMANA) -->
+    <div id="print-view-semanal" class="print-page">
       <div class="print-header">
         <div class="print-logo-senati">SENATI</div>
         <div class="print-header-center">
@@ -195,7 +268,6 @@
         </div>
       </div>
 
-      <!-- TABLA DE METADATOS -->
       <table class="print-meta-table">
         <tr>
           <td><strong>ESTUDIANTE:</strong> <span id="pr-estudiante"></span></td>
@@ -216,7 +288,6 @@
         </tr>
       </table>
 
-      <!-- TABLA SEMANAL -->
       <div class="print-section-title">I. INFORME SEMANAL DE ACTIVIDADES (ROTACIÓN Y TAREAS)</div>
       <table class="print-table">
         <thead>
@@ -264,7 +335,6 @@
         </tbody>
       </table>
 
-      <!-- TAREA SIGNIFICATIVA -->
       <div class="print-section-title">II. INFORME DE LA TAREA MÁS SIGNIFICATIVA</div>
       <div style="font-weight: bold; margin-bottom: 5px; font-size: 10pt;">
         Tarea: <span id="pr-ts-titulo"></span>
@@ -284,7 +354,6 @@
         </div>
       </div>
 
-      <!-- ESPACIO DE FIRMAS -->
       <div class="print-signatures-row">
         <div class="signature-box">
           <div style="height: 45px;"></div>
@@ -300,6 +369,147 @@
         </div>
       </div>
     </div>
+
+    <!-- 2. FORMATO DUAL-05 (EMPRESA): INFORME QUINCENAL (2 SEMANAS) -->
+    <div id="print-view-empresa" class="print-page" style="display: none;">
+      <div class="print-header">
+        <div class="print-logo-senati">SENATI</div>
+        <div class="print-header-center">
+          <h3>SERVICIO NACIONAL DE ADIESTRAMIENTO EN TRABAJO INDUSTRIAL</h3>
+          <h4>DIRECCIÓN ZONAL / PROGRAMA DE FORMACIÓN DUAL</h4>
+          <strong style="font-size: 11pt;">INFORME DE FORMACIÓN PRÁCTICA EN EMPRESA (2 SEMANAS)</strong>
+        </div>
+        <div style="font-size: 8.5pt; font-weight: bold; border: 1px solid #000; padding: 4px; text-align: center;">
+          FORMATO DUAL-05<br>EMPRESA
+        </div>
+      </div>
+
+      <table class="print-meta-table">
+        <tr>
+          <td><strong>ESTUDIANTE:</strong> <span id="pr-emp-estudiante"></span></td>
+          <td><strong>SEMESTRE:</strong> <span id="pr-emp-semestre"></span></td>
+          <td><strong>INFORME QUINCENAL N°:</strong> <span id="pr-emp-quincena"></span></td>
+        </tr>
+        <tr>
+          <td><strong>CARRERA:</strong> <span id="pr-emp-carrera"></span></td>
+          <td colspan="2"><strong>PERIODO FORMATIVO:</strong> <span id="pr-emp-periodo"></span></td>
+        </tr>
+        <tr>
+          <td><strong>EMPRESA:</strong> <span id="pr-emp-empresa"></span></td>
+          <td colspan="2"><strong>ÁREA DE PRÁCTICA:</strong> <span id="pr-emp-area"></span></td>
+        </tr>
+        <tr>
+          <td><strong>MONITOR DE EMPRESA:</strong> <span id="pr-emp-monitor"></span></td>
+          <td colspan="2"><strong>INSTRUCTOR SENATI:</strong> <span id="pr-emp-instructor"></span></td>
+        </tr>
+      </table>
+
+      <!-- I. CONSOLIDADO DE ACTIVIDADES 2 SEMANAS -->
+      <div class="print-section-title">I. REPORTE QUINCENAL DE TAREAS Y OPERACIONES EN EMPRESA</div>
+      
+      <!-- SUB-TABLA SEMANA A -->
+      <div style="font-size: 9pt; font-weight: bold; margin: 4px 0 2px 0;">
+        • SEMANA A (<span id="pr-emp-semA-titulo">Semana 1</span>):
+      </div>
+      <table class="print-table" style="margin-bottom: 8px;">
+        <thead>
+          <tr>
+            <th style="width: 12%;">DÍA</th>
+            <th style="width: 76%;">TAREAS REALIZADAS / OPERACIONES DE DESARROLLO</th>
+            <th style="width: 12%;">HORAS</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr><td>Lun</td><td id="pr-emp-semA-lun-tarea"></td><td style="text-align: center;" id="pr-emp-semA-lun-hrs"></td></tr>
+          <tr><td>Mar</td><td id="pr-emp-semA-mar-tarea"></td><td style="text-align: center;" id="pr-emp-semA-mar-hrs"></td></tr>
+          <tr><td>Mié</td><td id="pr-emp-semA-mie-tarea"></td><td style="text-align: center;" id="pr-emp-semA-mie-hrs"></td></tr>
+          <tr><td>Jue</td><td id="pr-emp-semA-jue-tarea"></td><td style="text-align: center;" id="pr-emp-semA-jue-hrs"></td></tr>
+          <tr><td>Vie</td><td id="pr-emp-semA-vie-tarea"></td><td style="text-align: center;" id="pr-emp-semA-vie-hrs"></td></tr>
+          <tr><td>Sáb</td><td id="pr-emp-semA-sab-tarea"></td><td style="text-align: center;" id="pr-emp-semA-sab-hrs"></td></tr>
+          <tr style="background: #f5f5f5;">
+            <td colspan="2" style="text-align: right; font-weight: bold;">Subtotal Horas Semana A:</td>
+            <td style="text-align: center; font-weight: bold;" id="pr-emp-semA-total"></td>
+          </tr>
+        </tbody>
+      </table>
+
+      <!-- SUB-TABLA SEMANA B -->
+      <div style="font-size: 9pt; font-weight: bold; margin: 4px 0 2px 0;">
+        • SEMANA B (<span id="pr-emp-semB-titulo">Semana 2</span>):
+      </div>
+      <table class="print-table" style="margin-bottom: 8px;">
+        <thead>
+          <tr>
+            <th style="width: 12%;">DÍA</th>
+            <th style="width: 76%;">TAREAS REALIZADAS / OPERACIONES DE DESARROLLO</th>
+            <th style="width: 12%;">HORAS</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr><td>Lun</td><td id="pr-emp-semB-lun-tarea"></td><td style="text-align: center;" id="pr-emp-semB-lun-hrs"></td></tr>
+          <tr><td>Mar</td><td id="pr-emp-semB-mar-tarea"></td><td style="text-align: center;" id="pr-emp-semB-mar-hrs"></td></tr>
+          <tr><td>Mié</td><td id="pr-emp-semB-mie-tarea"></td><td style="text-align: center;" id="pr-emp-semB-mie-hrs"></td></tr>
+          <tr><td>Jue</td><td id="pr-emp-semB-jue-tarea"></td><td style="text-align: center;" id="pr-emp-semB-jue-hrs"></td></tr>
+          <tr><td>Vie</td><td id="pr-emp-semB-vie-tarea"></td><td style="text-align: center;" id="pr-emp-semB-vie-hrs"></td></tr>
+          <tr><td>Sáb</td><td id="pr-emp-semB-sab-tarea"></td><td style="text-align: center;" id="pr-emp-semB-sab-hrs"></td></tr>
+          <tr style="background: #f5f5f5;">
+            <td colspan="2" style="text-align: right; font-weight: bold;">Subtotal Horas Semana B:</td>
+            <td style="text-align: center; font-weight: bold;" id="pr-emp-semB-total"></td>
+          </tr>
+          <tr style="background: #e9ecef; font-weight: bold;">
+            <td colspan="2" style="text-align: right; font-size: 9.5pt;">TOTAL HORAS ACUMULADAS EN EMPRESA (2 SEMANAS):</td>
+            <td style="text-align: center; font-size: 9.5pt;" id="pr-emp-total-quincena"></td>
+          </tr>
+        </tbody>
+      </table>
+
+      <!-- II. TAREA SIGNIFICATIVA DE LA QUINCENA -->
+      <div class="print-section-title">II. TAREA / PROYECTO PRINCIPAL DE LA QUINCENA</div>
+      <div style="font-weight: bold; margin-bottom: 4px; font-size: 9.5pt;">
+        Tarea: <span id="pr-emp-ts-titulo"></span>
+      </div>
+      <div class="print-box-content" id="pr-emp-ts-proceso" style="min-height: 80px; margin-bottom: 6px;"></div>
+
+      <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 8px; margin-bottom: 6px;">
+        <div>
+          <div style="font-weight: bold; font-size: 8.5pt;">Seguridad y Ergonomía:</div>
+          <div style="border: 1px solid #000; padding: 4px; font-size: 8pt; min-height: 40px;" id="pr-emp-ts-seguridad"></div>
+        </div>
+        <div>
+          <div style="font-weight: bold; font-size: 8.5pt;">Herramientas y Software:</div>
+          <div style="border: 1px solid #000; padding: 4px; font-size: 8pt; min-height: 40px;" id="pr-emp-ts-herramientas"></div>
+        </div>
+      </div>
+
+      <!-- III. EVALUACIÓN Y FIRMAS DEL MONITOR -->
+      <div class="print-section-title">III. EVALUACIÓN Y OBSERVACIONES DEL MONITOR DE EMPRESA</div>
+      <table class="print-meta-table" style="margin-bottom: 8px;">
+        <tr>
+          <td><strong>Asistencia y Puntualidad:</strong> <span id="pr-emp-eval-asistencia"></span></td>
+          <td><strong>Normas y Seguridad:</strong> <span id="pr-emp-eval-seguridad"></span></td>
+          <td><strong>Desempeño Técnico:</strong> <span id="pr-emp-eval-calidad"></span></td>
+        </tr>
+        <tr>
+          <td colspan="3"><strong>Observaciones del Monitor:</strong> <span id="pr-emp-eval-obs"></span></td>
+        </tr>
+      </table>
+
+      <div class="print-signatures-row">
+        <div class="signature-box">
+          <div style="height: 45px;"></div>
+          Firma del Estudiante
+        </div>
+        <div class="signature-box">
+          <div style="height: 45px;"></div>
+          Firma y Sello del Monitor de Empresa
+        </div>
+        <div class="signature-box">
+          <div style="height: 45px;"></div>
+          Firma y Calificación SENATI
+        </div>
+      </div>
+    </div>
+
   </div>
 
   <script type="module" src="./src/app.js"></script>
