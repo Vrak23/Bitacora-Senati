@@ -264,6 +264,14 @@ function setupListeners() {
     window.print();
   };
 
+  // Dynamic Central Hub URL
+  const hubBtn = document.getElementById('btn-central-hub');
+  if (hubBtn) {
+    hubBtn.href = window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1'
+      ? 'http://localhost:4200'
+      : 'https://central-de-estudio.vercel.app/';
+  }
+
   // Recalcular horas en inputs
   const dias = ['lunes', 'martes', 'miercoles', 'jueves', 'viernes', 'sabado'];
   dias.forEach(d => {
