@@ -1,0 +1,306 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Bitácora & Cuaderno de Informes SENATI | Dual</title>
+  <link rel="stylesheet" href="./src/style.css">
+  <link rel="icon" href="https://senati.blackboard.com/favicon.ico">
+</head>
+<body>
+
+  <!-- APP NAVBAR -->
+  <header class="app-header">
+    <div class="brand-row">
+      <span class="senati-badge-icon">SENATI</span>
+      <div class="brand-text">
+        <h1>Cuaderno de Informes Semanal (Dual)</h1>
+        <p>Informática y Desarrollo de Aplicaciones Web</p>
+      </div>
+    </div>
+
+    <div class="header-actions">
+      <button id="btn-guardar" class="btn btn-light" title="Guardar cambios">
+        <span class="btn-icon">💾</span> <span class="btn-text">Guardar</span>
+      </button>
+      <button id="btn-imprimir" class="btn btn-accent" title="Imprimir / Guardar PDF">
+        <span class="btn-icon">🖨️</span> <span class="btn-text">Imprimir / PDF</span>
+      </button>
+      <a href="http://localhost:4200" class="btn btn-ghost" title="Volver a Central Hub">
+        <span class="btn-icon">←</span> <span class="btn-text">Central Hub</span>
+      </a>
+    </div>
+  </header>
+
+  <!-- CONTENEDOR PRINCIPAL -->
+  <main class="container">
+    <!-- BARRA DE SEMANAS -->
+    <div class="weeks-bar">
+      <span class="weeks-label">📅 Seleccionar Semana:</span>
+      <div id="weeks-pills-container" class="weeks-pills-scroll"></div>
+    </div>
+
+    <!-- SECCIÓN 1: DATOS GENERALES -->
+    <section class="card-section">
+      <div class="section-head">
+        <h2>1. Datos del Estudiante y Formación Dual</h2>
+      </div>
+
+      <div class="form-grid-3">
+        <div class="form-group">
+          <label>Estudiante:</label>
+          <input type="text" id="meta-estudiante" class="form-control" />
+        </div>
+        <div class="form-group">
+          <label>ID / Matrícula:</label>
+          <input type="text" id="meta-matricula" class="form-control" placeholder="Ej: 001429812" />
+        </div>
+        <div class="form-group">
+          <label>Carrera:</label>
+          <input type="text" id="meta-carrera" class="form-control" />
+        </div>
+        <div class="form-group">
+          <label>Semestre:</label>
+          <input type="text" id="meta-semestre" class="form-control" />
+        </div>
+        <div class="form-group">
+          <label>Empresa Formadora:</label>
+          <input type="text" id="meta-empresa" class="form-control" />
+        </div>
+        <div class="form-group">
+          <label>Área de Práctica:</label>
+          <input type="text" id="meta-area" class="form-control" />
+        </div>
+        <div class="form-group">
+          <label>Monitor de Empresa:</label>
+          <input type="text" id="meta-monitor" class="form-control" placeholder="Nombre del monitor técnico" />
+        </div>
+        <div class="form-group">
+          <label>Instructor SENATI:</label>
+          <input type="text" id="meta-instructor" class="form-control" placeholder="Nombre del docente/tutor" />
+        </div>
+      </div>
+    </section>
+
+    <!-- SECCIÓN 2: PLAN SEMANAL DE ROTACIÓN / TAREAS -->
+    <section class="card-section">
+      <div class="section-head">
+        <h2>2. Plan Semanal de Trabajo — Semana <span id="display-semana-num">1</span></h2>
+        <div class="week-date-range">
+          <input type="date" id="meta-fecha-inicio" class="form-control range-date-input" title="Inicio de semana" />
+          <span class="range-separator">al</span>
+          <input type="date" id="meta-fecha-fin" class="form-control range-date-input" title="Fin de semana" />
+        </div>
+      </div>
+
+      <div class="table-responsive">
+        <table class="diary-table">
+          <thead>
+            <tr>
+              <th style="width: 110px;">Día</th>
+              <th>Tareas Ejecutadas / Operaciones de Desarrollo de Software</th>
+              <th style="width: 100px; text-align: center;">Horas</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td class="day-badge">Lunes</td>
+              <td><input type="text" id="dia-lunes-tarea" class="form-control" placeholder="Ej: Maquetación responsive de vista de login con Tailwind y validación de campos" /></td>
+              <td class="hours-td"><input type="number" id="dia-lunes-horas" class="form-control hours-input" min="0" max="12" value="6" /></td>
+            </tr>
+            <tr>
+              <td class="day-badge">Martes</td>
+              <td><input type="text" id="dia-martes-tarea" class="form-control" placeholder="Ej: Creación de endpoints REST en Express y configuración de rutas protegidas" /></td>
+              <td class="hours-td"><input type="number" id="dia-martes-horas" class="form-control hours-input" min="0" max="12" value="6" /></td>
+            </tr>
+            <tr>
+              <td class="day-badge">Miércoles</td>
+              <td><input type="text" id="dia-miercoles-tarea" class="form-control" placeholder="Ej: Modelado y consultas a base de datos PostgreSQL con migraciones" /></td>
+              <td class="hours-td"><input type="number" id="dia-miercoles-horas" class="form-control hours-input" min="0" max="12" value="6" /></td>
+            </tr>
+            <tr>
+              <td class="day-badge">Jueves</td>
+              <td><input type="text" id="dia-jueves-tarea" class="form-control" placeholder="Ej: Integración de servicios HTTP frontend con backend mediante Signals/RxJS" /></td>
+              <td class="hours-td"><input type="number" id="dia-jueves-horas" class="form-control hours-input" min="0" max="12" value="6" /></td>
+            </tr>
+            <tr>
+              <td class="day-badge">Viernes</td>
+              <td><input type="text" id="dia-viernes-tarea" class="form-control" placeholder="Ej: Pruebas en Postman, depuración de bugs y despliegue a producción en Vercel" /></td>
+              <td class="hours-td"><input type="number" id="dia-viernes-horas" class="form-control hours-input" min="0" max="12" value="6" /></td>
+            </tr>
+            <tr>
+              <td class="day-badge">Sábado</td>
+              <td><input type="text" id="dia-sabado-tarea" class="form-control" placeholder="Ej: Documentación técnica del proyecto y reunión semanal de retroalimentación" /></td>
+              <td class="hours-td"><input type="number" id="dia-sabado-horas" class="form-control hours-input" min="0" max="12" value="0" /></td>
+            </tr>
+            <tr class="total-row">
+              <td colspan="2" class="total-label">Total Horas Formativas Acumuladas en la Semana:</td>
+              <td id="total-horas-semana" class="total-value">30 hrs</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </section>
+
+    <!-- SECCIÓN 3: INFORME DE LA TAREA MÁS SIGNIFICATIVA -->
+    <section class="card-section">
+      <div class="section-head">
+        <h2>3. Tarea Más Significativa de la Semana</h2>
+      </div>
+
+      <!-- ASISTENTE DE PLANTILLAS -->
+      <div class="template-bar">
+        <span>⚡ Asistente de Redacción Técnica:</span>
+        <select id="template-select"></select>
+      </div>
+
+      <div class="form-group" style="margin-bottom: 1rem;">
+        <label>Denominación de la Tarea / Proyecto:</label>
+        <input type="text" id="ts-titulo" class="form-control" placeholder="Ej: Implementación de arquitectura de servicios REST con Node.js y Angular" />
+      </div>
+
+      <div class="form-group" style="margin-bottom: 1rem;">
+        <label>Descripción del Proceso Operacional (Paso a Paso):</label>
+        <textarea id="ts-proceso" class="form-control font-monospace" rows="6" placeholder="Describe secuencialmente cada etapa técnica realizada en el desarrollo..."></textarea>
+      </div>
+
+      <div class="form-group" style="margin-bottom: 1rem;">
+        <label>Normas Técnicas, Seguridad y Ergonomía en Desarrollo de Software:</label>
+        <textarea id="ts-seguridad" class="form-control" rows="3" placeholder="Pausas activas, postura ergonómica a 90°, organización de cables, respaldos en Git..."></textarea>
+      </div>
+
+      <div class="form-group">
+        <label>Herramientas, Software y Equipos Utilizados:</label>
+        <input type="text" id="ts-herramientas" class="form-control" placeholder="Ej: VS Code, Node.js, Angular, Postman, Git, PostgreSQL, Windows 11." />
+      </div>
+    </section>
+  </main>
+
+  <!-- ==================================================== -->
+  <!-- VISTA DE IMPRESIÓN OFICIAL SENATI (SOLO PRINT A4)     -->
+  <!-- ==================================================== -->
+  <div id="official-print-view">
+    <div class="print-page">
+      <!-- MEMBRETE OFICIAL -->
+      <div class="print-header">
+        <div class="print-logo-senati">SENATI</div>
+        <div class="print-header-center">
+          <h3>SERVICIO NACIONAL DE ADIESTRAMIENTO EN TRABAJO INDUSTRIAL</h3>
+          <h4>DIRECCIÓN ZONAL / PROGRAMA DE FORMACIÓN DUAL</h4>
+          <strong style="font-size: 11pt;">CUADERNO DE INFORMES DE FORMACIÓN PRÁCTICA</strong>
+        </div>
+        <div style="font-size: 9pt; font-weight: bold; border: 1px solid #000; padding: 4px;">
+          FORMATO DUAL-04
+        </div>
+      </div>
+
+      <!-- TABLA DE METADATOS -->
+      <table class="print-meta-table">
+        <tr>
+          <td><strong>ESTUDIANTE:</strong> <span id="pr-estudiante"></span></td>
+          <td><strong>SEMESTRE:</strong> <span id="pr-semestre"></span></td>
+          <td><strong>SEMANA N°:</strong> <span id="pr-semana"></span></td>
+        </tr>
+        <tr>
+          <td><strong>CARRERA:</strong> <span id="pr-carrera"></span></td>
+          <td colspan="2"><strong>PERIODO:</strong> <span id="pr-periodo"></span></td>
+        </tr>
+        <tr>
+          <td><strong>EMPRESA:</strong> <span id="pr-empresa"></span></td>
+          <td colspan="2"><strong>ÁREA:</strong> <span id="pr-area"></span></td>
+        </tr>
+        <tr>
+          <td><strong>MONITOR:</strong> <span id="pr-monitor"></span></td>
+          <td colspan="2"><strong>INSTRUCTOR:</strong> <span id="pr-instructor"></span></td>
+        </tr>
+      </table>
+
+      <!-- TABLA SEMANAL -->
+      <div class="print-section-title">I. INFORME SEMANAL DE ACTIVIDADES (ROTACIÓN Y TAREAS)</div>
+      <table class="print-table">
+        <thead>
+          <tr>
+            <th style="width: 15%;">DÍA</th>
+            <th style="width: 70%;">TAREAS REALIZADAS / OPERACIONES EJECUTADAS</th>
+            <th style="width: 15%;">HORAS</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td><strong>LUNES</strong></td>
+            <td id="pr-lunes-tarea"></td>
+            <td style="text-align: center;" id="pr-lunes-horas"></td>
+          </tr>
+          <tr>
+            <td><strong>MARTES</strong></td>
+            <td id="pr-martes-tarea"></td>
+            <td style="text-align: center;" id="pr-martes-horas"></td>
+          </tr>
+          <tr>
+            <td><strong>MIÉRCOLES</strong></td>
+            <td id="pr-miercoles-tarea"></td>
+            <td style="text-align: center;" id="pr-miercoles-horas"></td>
+          </tr>
+          <tr>
+            <td><strong>JUEVES</strong></td>
+            <td id="pr-jueves-tarea"></td>
+            <td style="text-align: center;" id="pr-jueves-horas"></td>
+          </tr>
+          <tr>
+            <td><strong>VIERNES</strong></td>
+            <td id="pr-viernes-tarea"></td>
+            <td style="text-align: center;" id="pr-viernes-horas"></td>
+          </tr>
+          <tr>
+            <td><strong>SÁBADO</strong></td>
+            <td id="pr-sabado-tarea"></td>
+            <td style="text-align: center;" id="pr-sabado-horas"></td>
+          </tr>
+          <tr>
+            <td colspan="2" style="text-align: right; font-weight: bold;">TOTAL HORAS DE LA SEMANA:</td>
+            <td style="text-align: center; font-weight: bold;" id="pr-total-horas"></td>
+          </tr>
+        </tbody>
+      </table>
+
+      <!-- TAREA SIGNIFICATIVA -->
+      <div class="print-section-title">II. INFORME DE LA TAREA MÁS SIGNIFICATIVA</div>
+      <div style="font-weight: bold; margin-bottom: 5px; font-size: 10pt;">
+        Tarea: <span id="pr-ts-titulo"></span>
+      </div>
+
+      <div style="font-weight: bold; font-size: 9pt; margin-top: 6px;">Descripción del Proceso:</div>
+      <div class="print-box-content" id="pr-ts-proceso"></div>
+
+      <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-top: 5px;">
+        <div>
+          <div style="font-weight: bold; font-size: 9pt;">Normas de Seguridad / Medio Ambiente:</div>
+          <div style="border: 1px solid #000; padding: 6px; font-size: 8.5pt; min-height: 50px;" id="pr-ts-seguridad"></div>
+        </div>
+        <div>
+          <div style="font-weight: bold; font-size: 9pt;">Equipos, Herramientas y Materiales:</div>
+          <div style="border: 1px solid #000; padding: 6px; font-size: 8.5pt; min-height: 50px;" id="pr-ts-herramientas"></div>
+        </div>
+      </div>
+
+      <!-- ESPACIO DE FIRMAS -->
+      <div class="print-signatures-row">
+        <div class="signature-box">
+          <div style="height: 45px;"></div>
+          Firma del Estudiante
+        </div>
+        <div class="signature-box">
+          <div style="height: 45px;"></div>
+          Firma y Sello del Monitor
+        </div>
+        <div class="signature-box">
+          <div style="height: 45px;"></div>
+          Firma y Nota del Instructor
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <script type="module" src="./src/app.js"></script>
+</body>
+</html>
