@@ -13,7 +13,8 @@ function getEmptySeminarioData() {
         urlUi: 'http://localhost:4200/',
         imgUi: '',
         imgCodigo: '',
-        tagCodigo: 'app.routes.ts:'
+        tagCodigo: 'app.routes.ts:',
+        extras: []
       },
       2: {
         titulo: 'Semana 2: Formularios Template-Driven y Validaciones Sintácticas',
@@ -21,7 +22,8 @@ function getEmptySeminarioData() {
         urlUi: 'http://localhost:4200/',
         imgUi: '',
         imgCodigo: '',
-        tagCodigo: 'PetShop.component.ts:'
+        tagCodigo: 'PetShop.component.ts:',
+        extras: []
       },
       3: {
         titulo: 'Semana 3: Formulario Reactivo de Adopciones y Servicios Asíncronos',
@@ -29,7 +31,8 @@ function getEmptySeminarioData() {
         urlUi: 'http://localhost:4200/',
         imgUi: '',
         imgCodigo: '',
-        tagCodigo: 'Adopciones.service.ts:'
+        tagCodigo: 'Adopciones.service.ts:',
+        extras: []
       },
       4: {
         titulo: 'Semana 4: Dashboard de Métricas, KPIs y Despliegue en Servidor',
@@ -37,7 +40,8 @@ function getEmptySeminarioData() {
         urlUi: 'http://localhost:4200/',
         imgUi: '',
         imgCodigo: '',
-        tagCodigo: 'Dashboard.component.ts:'
+        tagCodigo: 'Dashboard.component.ts:',
+        extras: []
       }
     }
   };
@@ -195,8 +199,12 @@ function getSeminarioActividad(actNum) {
       urlUi: 'http://localhost:4200/',
       imgUi: '',
       imgCodigo: '',
-      tagCodigo: ''
+      tagCodigo: '',
+      extras: []
     };
+  }
+  if (!appData.informeSeminario.actividades[actNum].extras) {
+    appData.informeSeminario.actividades[actNum].extras = [];
   }
   return appData.informeSeminario.actividades[actNum];
 }
@@ -515,6 +523,105 @@ function renderSeminarioActivityUI() {
     codEmpty.style.display = 'flex';
     codPreview.style.display = 'none';
   }
+
+  // Renderizar Galería de Capturas Adicionales
+  renderExtraEvidencesList(act);
+}
+
+function renderExtraEvidencesList(act) {
+  const container = document.getElementById('extra-evidencias-list');
+  if (!container) return;
+  container.innerHTML = '';
+
+  const extras = act.extras || [];
+
+  if (extras.length === 0) {
+    container.innerHTML = `<div style="grid-column: 1 / -1; text-align: center; color: var(--text-dim); font-size: 0.82rem; padding: 0.5rem; border: 1px dashed var(--border); border-radius: 8px;">No hay capturas adicionales agregadas a esta actividad. Usa los botones superiores para agregar capturas extra de UI o Código.</div>`;
+    return;
+  }
+
+  extras.forEach((ex, idx) => {
+    const card = document.createElement('div');
+    card.className = 'evidencia-box';
+
+    const isUi = ex.tipo === 'ui';
+    const titleText = isUi ? `🌐 Captura UI Extra ${idx + 1}` : `💻 Captura Código Extra ${idx + 1}`;
+    const placeholderText = isUi ? 'Ej: http://localhost:4200/clientes' : 'Ej: clientes.component.ts:';
+
+    const imgHtml = ex.img
+      ? `<img src="${ex.img}" style="max-height: 140px; object-fit: contain; border-radius: 6px;" alt="Evidencia Extra" />`
+      : `<div style="padding: 1rem; color: var(--text-dim); font-size: 0.8rem;">Arrastra aquí una imagen o haz clic para subir</div>`;
+
+    card.innerHTML = `
+      <div class="evidencia-head" style="display: flex; justify-content: space-between; align-items: center;">
+        <h3 style="font-size: 0.85rem;">${titleText}</h3>
+        <button type="button" class="btn-remove-extra" data-idx="${idx}" style="background: none; border: none; color: #ef4444; font-size: 0.8rem; cursor: pointer;" title="Eliminar captura">🗑️ Eliminar</button>
+      </div>
+
+      <div class="form-group" style="margin-bottom: 0.5rem;">
+        <label style="font-size: 0.75rem;">${isUi ? 'URL de la captura:' : 'Etiqueta / Nombre de archivo:'}</label>
+        <input type="text" class="form-control extra-tag-input" data-idx="${idx}" value="${ex.tag || ''}" placeholder="${placeholderText}" style="font-size: 0.8rem; padding: 0.25rem 0.5rem;" />
+      </div>
+
+      <div class="dropzone-box extra-dropzone" data-idx="${idx}" style="min-height: 120px; padding: 0.5rem;">
+        <input type="file" accept="image/*" class="file-hidden-input extra-file-input" data-idx="${idx}" />
+        <div class="dropzone-preview" style="display: flex; flex-direction: column; align-items: center;">
+          ${imgHtml}
+          ${ex.img ? `<button type="button" class="btn-preview-action view btn-view-extra" data-idx="${idx}" style="margin-top: 0.35rem; font-size: 0.7rem; padding: 0.2rem 0.5rem;">🔍 Ampliar</button>` : ''}
+        </div>
+      </div>
+    `;
+
+    container.appendChild(card);
+  });
+
+  // Listeners para items extra
+  container.querySelectorAll('.extra-tag-input').forEach(input => {
+    input.oninput = (e) => {
+      const idx = Number(e.target.getAttribute('data-idx'));
+      if (act.extras[idx]) {
+        act.extras[idx].tag = e.target.value;
+      }
+    };
+  });
+
+  container.querySelectorAll('.extra-file-input').forEach(input => {
+    input.onchange = async (e) => {
+      const idx = Number(e.target.getAttribute('data-idx'));
+      if (e.target.files && e.target.files[0] && act.extras[idx]) {
+        const dataUrl = await compressAndConvertImage(e.target.files[0], 1200, 0.85);
+        act.extras[idx].img = dataUrl;
+        renderSeminarioActivityUI();
+        showToast('¡Captura adicional cargada!');
+      }
+    };
+  });
+
+  container.querySelectorAll('.btn-remove-extra').forEach(btn => {
+    btn.onclick = () => {
+      const idx = Number(btn.getAttribute('data-idx'));
+      act.extras.splice(idx, 1);
+      renderSeminarioActivityUI();
+      showToast('Captura adicional eliminada');
+    };
+  });
+
+  container.querySelectorAll('.btn-view-extra').forEach(btn => {
+    btn.onclick = () => {
+      const idx = Number(btn.getAttribute('data-idx'));
+      const item = act.extras[idx];
+      if (item && item.img) {
+        const modal = document.getElementById('img-fullscreen-modal');
+        const modalImg = document.getElementById('modal-full-img');
+        const modalCaption = document.getElementById('modal-img-caption');
+        if (modal && modalImg) {
+          modalImg.src = item.img;
+          if (modalCaption) modalCaption.innerText = item.tag || `Captura adicional (${item.tipo.toUpperCase()})`;
+          modal.style.display = 'flex';
+        }
+      }
+    };
+  });
 }
 
 function readFormToCurrentState() {
@@ -773,7 +880,7 @@ function syncToOfficialPrint() {
     document.getElementById('pr-emp-eval-calidad').innerText = empData.calidad || 'Excelente';
     document.getElementById('pr-emp-eval-obs').innerText = empData.observaciones || 'Desempeño conforme a los objetivos del perfil técnico.';
   } else if (modo === 'seminario') {
-    // MODO SEMINARIO ACADÉMICO (4 ACTIVIDADES CON EVIDENCIAS)
+    // MODO SEMINARIO ACADÉMICO (4 ACTIVIDADES CON EVIDENCIAS ILIMITADAS)
     if (printSemanal) printSemanal.style.display = 'none';
     if (printEmpresa) printEmpresa.style.display = 'none';
     if (printSeminario) printSeminario.style.display = 'block';
@@ -793,7 +900,7 @@ function syncToOfficialPrint() {
     document.getElementById('pr-sem-ts-seguridad').innerText = semData.seguridadGlobal || 'No especificado.';
     document.getElementById('pr-sem-ts-herramientas').innerText = semData.herramientasGlobal || 'No especificado.';
 
-    // Renderizar las 4 actividades con sus evidencias
+    // Renderizar las 4 actividades con sus evidencias (principales + extras)
     const container = document.getElementById('pr-sem-evidencias-container');
     if (container) {
       container.innerHTML = '';
@@ -813,6 +920,23 @@ function syncToOfficialPrint() {
           ? `<img src="${act.imgCodigo}" class="pr-evidence-img" alt="Código Actividad ${i}" />`
           : `<div class="pr-no-img">Sin captura de código CodeSnap</div>`;
 
+        // Render extras si existen
+        let extrasHtml = '';
+        if (act.extras && act.extras.length > 0) {
+          const extraCols = act.extras.map(ex => {
+            const isUi = ex.tipo === 'ui';
+            const barHtml = isUi
+              ? `<div class="pr-browser-bar">🌐 <span>${ex.tag || 'http://localhost:4200/'}</span></div>`
+              : `<div class="pr-codesnap-bar">💻 <span>${ex.tag || 'codigo.ts:'}</span></div>`;
+            const imgEl = ex.img
+              ? `<img src="${ex.img}" class="pr-evidence-img" alt="Evidencia Extra" />`
+              : `<div class="pr-no-img">Sin imagen</div>`;
+            return `<div class="pr-evidence-col">${barHtml}${imgEl}</div>`;
+          }).join('');
+
+          extrasHtml = `<div class="pr-evidence-subgrid" style="margin-top: 8px;">${extraCols}</div>`;
+        }
+
         itemDiv.innerHTML = `
           <div class="pr-act-header">Actividad N° ${i}: ${act.titulo || 'Sin título'}</div>
           ${act.descripcion ? `<div class="pr-act-desc">${act.descripcion}</div>` : ''}
@@ -826,6 +950,7 @@ function syncToOfficialPrint() {
               ${codeHtml}
             </div>
           </div>
+          ${extrasHtml}
         `;
         container.appendChild(itemDiv);
       }
@@ -845,6 +970,10 @@ function setupDropzoneEvents() {
   const fileCodInput = document.getElementById('file-codigo-img');
   const btnRemoveCod = document.getElementById('btn-remove-codigo');
   const btnViewCod = document.getElementById('btn-view-codigo');
+
+  // Botones de Agregar Extra
+  const btnAddExtraUi = document.getElementById('btn-add-extra-ui');
+  const btnAddExtraCod = document.getElementById('btn-add-extra-codigo');
 
   // Modal
   const modal = document.getElementById('img-fullscreen-modal');
@@ -963,6 +1092,39 @@ function setupDropzoneEvents() {
       const semData = appData.informeSeminario;
       const act = getSeminarioActividad(semData.actividadActual || 1);
       openModal(act.imgCodigo, `Código CodeSnap - Actividad ${semData.actividadActual}: ${act.titulo}`);
+    };
+  }
+
+  // Agregar Captura Extra
+  if (btnAddExtraUi) {
+    btnAddExtraUi.onclick = () => {
+      readFormToCurrentState();
+      const semData = appData.informeSeminario;
+      const act = getSeminarioActividad(semData.actividadActual || 1);
+      act.extras.push({
+        id: Date.now().toString(),
+        tipo: 'ui',
+        tag: 'http://localhost:4200/',
+        img: ''
+      });
+      renderSeminarioActivityUI();
+      showToast('Captura extra de UI agregada. Selecciona una imagen.');
+    };
+  }
+
+  if (btnAddExtraCod) {
+    btnAddExtraCod.onclick = () => {
+      readFormToCurrentState();
+      const semData = appData.informeSeminario;
+      const act = getSeminarioActividad(semData.actividadActual || 1);
+      act.extras.push({
+        id: Date.now().toString(),
+        tipo: 'codigo',
+        tag: 'component.ts:',
+        img: ''
+      });
+      renderSeminarioActivityUI();
+      showToast('Captura extra de código agregada. Selecciona una imagen.');
     };
   }
 }
