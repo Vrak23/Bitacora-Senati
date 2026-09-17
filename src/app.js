@@ -579,6 +579,14 @@ function setupListeners() {
   });
 }
 
+function hideSplashScreen() {
+  const splash = document.getElementById('app-splash-screen');
+  if (!splash) return;
+  setTimeout(() => {
+    splash.classList.add('splash-hidden');
+  }, 400);
+}
+
 // Inicialización
 document.addEventListener('DOMContentLoaded', () => {
   updateFormatUI();
@@ -586,5 +594,6 @@ document.addEventListener('DOMContentLoaded', () => {
   renderTemplatesDropdown();
   populateForm();
   setupListeners();
+  hideSplashScreen();
 });
 
