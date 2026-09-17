@@ -1124,12 +1124,12 @@ body {
   position: relative;
   border: 2px dashed var(--border);
   border-radius: 10px;
-  padding: 1.25rem 1rem;
+  padding: 1.5rem 1rem;
   text-align: center;
   background: rgba(11, 17, 32, 0.5);
   cursor: pointer;
   transition: all 0.2s ease;
-  min-height: 180px;
+  min-height: 260px;
   display: flex;
   align-items: center;
   justify-content: center;
@@ -1184,7 +1184,7 @@ body {
 
 .dropzone-preview img {
   max-width: 100%;
-  max-height: 220px;
+  max-height: 340px;
   object-fit: contain;
   border-radius: 8px;
   border: 1px solid var(--border);
@@ -1481,7 +1481,7 @@ body {
 
   .pr-evidence-img {
     max-width: 100%;
-    max-height: 170px;
+    max-height: 220px;
     display: block;
     margin: 0 auto;
     object-fit: contain;
