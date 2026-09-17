@@ -251,6 +251,9 @@ function updateFormatUI() {
   const sec3Title = document.getElementById('section-3-title');
   const tsLabelTitulo = document.getElementById('ts-label-titulo');
 
+  const templateBar = document.querySelector('.template-bar');
+  const extraTsFields = document.getElementById('semanal-empresa-ts-fields');
+
   const modo = appData.modoFormato;
 
   btnSemanal?.classList.toggle('active', modo === 'semanal');
@@ -264,6 +267,8 @@ function updateFormatUI() {
     if (empresaMetaFields) empresaMetaFields.style.display = 'none';
     if (seminarioCard) seminarioCard.style.display = 'none';
     if (section2Plan) section2Plan.style.display = 'block';
+    if (templateBar) templateBar.style.display = 'flex';
+    if (extraTsFields) extraTsFields.style.display = 'block';
     if (sec1Title) sec1Title.innerText = '1. Datos de Identificación Académica SENATI';
     if (sec3Title) sec3Title.innerText = '3. Tarea Más Significativa de la Semana';
     if (tsLabelTitulo) tsLabelTitulo.innerText = 'Denominación de la Tarea / Proyecto:';
@@ -274,6 +279,8 @@ function updateFormatUI() {
     if (empresaMetaFields) empresaMetaFields.style.display = 'grid';
     if (seminarioCard) seminarioCard.style.display = 'none';
     if (section2Plan) section2Plan.style.display = 'block';
+    if (templateBar) templateBar.style.display = 'flex';
+    if (extraTsFields) extraTsFields.style.display = 'block';
     if (sec1Title) sec1Title.innerText = '1. Datos del Estudiante y Empresa Formadora (Dual)';
     if (sec3Title) sec3Title.innerText = '3. Tarea / Proyecto Principal de la Quincena';
     if (tsLabelTitulo) tsLabelTitulo.innerText = 'Denominación del Proyecto en Empresa:';
@@ -284,6 +291,8 @@ function updateFormatUI() {
     if (empresaMetaFields) empresaMetaFields.style.display = 'none';
     if (seminarioCard) seminarioCard.style.display = 'block';
     if (section2Plan) section2Plan.style.display = 'none';
+    if (templateBar) templateBar.style.display = 'none';
+    if (extraTsFields) extraTsFields.style.display = 'none';
     if (sec1Title) sec1Title.innerText = '1. Datos Generales de Identificación (SENATI PAWD-301)';
     if (sec3Title) sec3Title.innerText = '2. Tarea Más Significativa del Seminario';
     if (tsLabelTitulo) tsLabelTitulo.innerText = 'Denominación del Proyecto / Módulo Integrador:';
