@@ -44,14 +44,16 @@ function getEmptySeminarioData() {
 }
 
 const DEFAULT_DATA = {
-  estudiante: 'Rodrigo Llanos',
-  matricula: '',
+  estudiante: 'Rodrigo Daniel Ormeño Llanos',
+  matricula: '001681961',
   carrera: 'Informática y Desarrollo de Aplicaciones Web',
-  semestre: '4° Semestre',
-  empresa: 'Departamento de TI y Desarrollo Web',
-  area: 'Desarrollo de Software',
+  semestre: '4° Ciclo',
+  escuela: 'ETI (Escuela de Tecnologías de la Información)',
+  bloque: '406',
+  instructor: 'Jorge Luque Chambi',
+  empresa: '',
+  area: '',
   monitor: '',
-  instructor: '',
   modoFormato: 'semanal', // 'semanal' | 'empresa' | 'seminario'
   semanaActual: 1,       // 1..16
   quincenaActual: 1,     // 1..8
@@ -234,8 +236,10 @@ function updateFormatUI() {
   const weeksBar = document.querySelector('.weeks-bar');
   const subweeksBar = document.getElementById('empresa-subweeks-bar');
   const empresaEvalCard = document.getElementById('empresa-eval-card');
+  const empresaMetaFields = document.getElementById('empresa-meta-fields');
   const seminarioCard = document.getElementById('seminario-evidencias-card');
   const section2Plan = document.querySelector('.card-section:nth-of-type(2)');
+  const sec1Title = document.getElementById('sec-1-title');
   const sec3Title = document.getElementById('section-3-title');
   const tsLabelTitulo = document.getElementById('ts-label-titulo');
 
@@ -249,24 +253,30 @@ function updateFormatUI() {
     if (weeksBar) weeksBar.style.display = 'flex';
     if (subweeksBar) subweeksBar.style.display = 'none';
     if (empresaEvalCard) empresaEvalCard.style.display = 'none';
+    if (empresaMetaFields) empresaMetaFields.style.display = 'none';
     if (seminarioCard) seminarioCard.style.display = 'none';
     if (section2Plan) section2Plan.style.display = 'block';
+    if (sec1Title) sec1Title.innerText = '1. Datos de Identificación Académica SENATI';
     if (sec3Title) sec3Title.innerText = '3. Tarea Más Significativa de la Semana';
     if (tsLabelTitulo) tsLabelTitulo.innerText = 'Denominación de la Tarea / Proyecto:';
   } else if (modo === 'empresa') {
     if (weeksBar) weeksBar.style.display = 'flex';
     if (subweeksBar) subweeksBar.style.display = 'flex';
     if (empresaEvalCard) empresaEvalCard.style.display = 'block';
+    if (empresaMetaFields) empresaMetaFields.style.display = 'grid';
     if (seminarioCard) seminarioCard.style.display = 'none';
     if (section2Plan) section2Plan.style.display = 'block';
+    if (sec1Title) sec1Title.innerText = '1. Datos del Estudiante y Empresa Formadora (Dual)';
     if (sec3Title) sec3Title.innerText = '3. Tarea / Proyecto Principal de la Quincena';
     if (tsLabelTitulo) tsLabelTitulo.innerText = 'Denominación del Proyecto en Empresa:';
   } else if (modo === 'seminario') {
     if (weeksBar) weeksBar.style.display = 'none';
     if (subweeksBar) subweeksBar.style.display = 'none';
     if (empresaEvalCard) empresaEvalCard.style.display = 'none';
+    if (empresaMetaFields) empresaMetaFields.style.display = 'none';
     if (seminarioCard) seminarioCard.style.display = 'block';
     if (section2Plan) section2Plan.style.display = 'none';
+    if (sec1Title) sec1Title.innerText = '1. Datos Generales de Identificación (SENATI PAWD-301)';
     if (sec3Title) sec3Title.innerText = '2. Tarea Más Significativa del Seminario';
     if (tsLabelTitulo) tsLabelTitulo.innerText = 'Denominación del Proyecto / Módulo Integrador:';
   }
@@ -355,10 +365,14 @@ function populateForm() {
   document.getElementById('meta-matricula').value = appData.matricula || '';
   document.getElementById('meta-carrera').value = appData.carrera || '';
   document.getElementById('meta-semestre').value = appData.semestre || '';
+  document.getElementById('meta-escuela').value = appData.escuela || '';
+  document.getElementById('meta-bloque').value = appData.bloque || '';
+  document.getElementById('meta-instructor').value = appData.instructor || '';
+
+  // Datos Empresa (Solo en modo empresa)
   document.getElementById('meta-empresa').value = appData.empresa || '';
   document.getElementById('meta-area').value = appData.area || '';
   document.getElementById('meta-monitor').value = appData.monitor || '';
-  document.getElementById('meta-instructor').value = appData.instructor || '';
 
   const modo = appData.modoFormato;
   const displayLabel = document.getElementById('display-semana-label');
@@ -444,10 +458,10 @@ function populateForm() {
     const act = getSeminarioActividad(actNum);
 
     // Tarea Significativa global del seminario
-    document.getElementById('ts-titulo').value = semData.tituloGlobal || act.titulo || '';
-    document.getElementById('ts-proceso').value = semData.procesoGlobal || '1. Análisis de requerimientos y configuración del entorno de desarrollo.\n2. Maquetación responsive y estructura de componentes.\n3. Lógica de negocio, estado y conexión a API/servicios.\n4. Pruebas funcionales en servidor local/cloud y control de errores.';
-    document.getElementById('ts-seguridad').value = semData.seguridadGlobal || '• Ergonomía frente a la pantalla (postura a 90° y descansos según regla 20-20-20).\n• Ahorro de energía en la estación de trabajo y política de cero papel.';
-    document.getElementById('ts-herramientas').value = semData.herramientasGlobal || 'Visual Studio Code, Angular, Node.js, Postman, Chrome DevTools, Git, Windows 11.';
+    document.getElementById('ts-titulo').value = semData.tituloGlobal || act.titulo || 'Desarrollo de la aplicación web PetShop con módulos de gestión de mascotas, clientes, adopciones y dashboard en Angular';
+    document.getElementById('ts-proceso').value = semData.procesoGlobal || 'El desarrollo de la aplicación web se inició configurando el entorno en Angular con arquitectura de componentes Standalone y definiendo las rutas SPA principales en app.routes.ts.\n\nPosteriormente, se implementaron los módulos principales con formularios reactivos y template-driven, aplicando validaciones sintácticas estrictas para DNI, correo electrónico y campos requeridos.\n\nSe diseñó e integró la lógica de negocio mediante servicios asíncronos en TypeScript, gestionando el estado de las entidades y maquetando un Dashboard con métricas clave y tarjetas KPI.\n\nFinalmente, se realizaron las pruebas funcionales de navegación y rendimiento ejecutando el proyecto en el servidor local de desarrollo (http://localhost:4200/), verificando el correcto envío de datos y la ausencia de errores en la consola DevTools.';
+    document.getElementById('ts-seguridad').value = semData.seguridadGlobal || '• Aplicación estricta de normas de ergonomía ocupacional: postura de columna a 90° frente al escritorio y altura del monitor nivelada a la vista.\n• Cumplimiento de la regla 20-20-20 (descanso visual de 20 segundos cada 20 minutos).\n• Mantenimiento del puesto de trabajo ordenado, política de cero papel y ahorro eficiente de energía eléctrica.';
+    document.getElementById('ts-herramientas').value = semData.herramientasGlobal || 'Visual Studio Code, Angular CLI, TypeScript, HTML5/CSS3, Node.js, Postman, Chrome DevTools, Git, Windows 11.';
 
     renderSeminarioActivityUI();
   }
@@ -509,10 +523,13 @@ function readFormToCurrentState() {
   appData.matricula = document.getElementById('meta-matricula').value;
   appData.carrera = document.getElementById('meta-carrera').value;
   appData.semestre = document.getElementById('meta-semestre').value;
+  appData.escuela = document.getElementById('meta-escuela').value;
+  appData.bloque = document.getElementById('meta-bloque').value;
+  appData.instructor = document.getElementById('meta-instructor').value;
+
   appData.empresa = document.getElementById('meta-empresa').value;
   appData.area = document.getElementById('meta-area').value;
   appData.monitor = document.getElementById('meta-monitor').value;
-  appData.instructor = document.getElementById('meta-instructor').value;
 
   const modo = appData.modoFormato;
 
@@ -665,13 +682,13 @@ function syncToOfficialPrint() {
     document.getElementById('pr-estudiante').innerText = appData.estudiante || '-';
     document.getElementById('pr-carrera').innerText = appData.carrera || '-';
     document.getElementById('pr-semestre').innerText = appData.semestre || '-';
-    document.getElementById('pr-empresa').innerText = appData.empresa || '-';
-    document.getElementById('pr-area').innerText = appData.area || '-';
-    document.getElementById('pr-monitor').innerText = appData.monitor || '-';
+    document.getElementById('pr-empresa').innerText = appData.empresa || 'CFP SENATI';
+    document.getElementById('pr-area').innerText = appData.area || 'Taller de Cómputo / ETI';
+    document.getElementById('pr-monitor').innerText = appData.monitor || appData.instructor || '-';
     document.getElementById('pr-instructor').innerText = appData.instructor || '-';
 
     document.getElementById('pr-semana').innerText = appData.semanaActual;
-    document.getElementById('pr-periodo').innerText = (wk.fechaInicio && wk.fechaFin) ? `${wk.fechaInicio} al ${wk.fechaFin}` : 'Según rol de prácticas';
+    document.getElementById('pr-periodo').innerText = (wk.fechaInicio && wk.fechaFin) ? `${wk.fechaInicio} al ${wk.fechaFin}` : 'Según rol lectivo';
 
     const dias = ['lunes', 'martes', 'miercoles', 'jueves', 'viernes', 'sabado'];
     let totalHoras = 0;
@@ -756,7 +773,7 @@ function syncToOfficialPrint() {
     document.getElementById('pr-emp-eval-calidad').innerText = empData.calidad || 'Excelente';
     document.getElementById('pr-emp-eval-obs').innerText = empData.observaciones || 'Desempeño conforme a los objetivos del perfil técnico.';
   } else if (modo === 'seminario') {
-    // MODO SEMINARIO (4 ACTIVIDADES)
+    // MODO SEMINARIO ACADÉMICO (4 ACTIVIDADES CON EVIDENCIAS)
     if (printSemanal) printSemanal.style.display = 'none';
     if (printEmpresa) printEmpresa.style.display = 'none';
     if (printSeminario) printSeminario.style.display = 'block';
@@ -767,10 +784,11 @@ function syncToOfficialPrint() {
     document.getElementById('pr-sem-matricula').innerText = appData.matricula || '-';
     document.getElementById('pr-sem-semestre').innerText = appData.semestre || '-';
     document.getElementById('pr-sem-carrera').innerText = appData.carrera || '-';
+    document.getElementById('pr-sem-escuela').innerText = appData.escuela || 'ETI (Escuela de TI)';
+    document.getElementById('pr-sem-bloque').innerText = appData.bloque || '406';
     document.getElementById('pr-sem-instructor').innerText = appData.instructor || '-';
-    document.getElementById('pr-sem-empresa').innerText = appData.empresa || '-';
 
-    document.getElementById('pr-sem-ts-titulo').innerText = semData.tituloGlobal || 'Proyecto de Seminario de Prácticas';
+    document.getElementById('pr-sem-ts-titulo').innerText = semData.tituloGlobal || 'Desarrollo de la aplicación web PetShop con módulos de gestión de mascotas, clientes, adopciones y dashboard en Angular';
     document.getElementById('pr-sem-ts-proceso').innerText = semData.procesoGlobal || 'No especificado.';
     document.getElementById('pr-sem-ts-seguridad').innerText = semData.seguridadGlobal || 'No especificado.';
     document.getElementById('pr-sem-ts-herramientas').innerText = semData.herramientasGlobal || 'No especificado.';

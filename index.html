@@ -86,41 +86,53 @@
     <!-- SECCIÓN 1: DATOS GENERALES -->
     <section class="card-section">
       <div class="section-head">
-        <h2>1. Datos del Estudiante y Formación Dual</h2>
+        <h2 id="sec-1-title">1. Datos del Estudiante y Formación Dual</h2>
       </div>
 
       <div class="form-grid-3">
         <div class="form-group">
           <label>Estudiante:</label>
-          <input type="text" id="meta-estudiante" class="form-control" />
+          <input type="text" id="meta-estudiante" class="form-control" placeholder="Nombre completo" />
         </div>
         <div class="form-group">
           <label>ID / Matrícula:</label>
-          <input type="text" id="meta-matricula" class="form-control" placeholder="Ej: 001429812" />
+          <input type="text" id="meta-matricula" class="form-control" placeholder="Ej: 001681961" />
         </div>
         <div class="form-group">
           <label>Carrera:</label>
-          <input type="text" id="meta-carrera" class="form-control" />
+          <input type="text" id="meta-carrera" class="form-control" placeholder="Ej: Informática y Desarrollo de Aplicaciones Web" />
         </div>
         <div class="form-group">
-          <label>Semestre:</label>
-          <input type="text" id="meta-semestre" class="form-control" />
+          <label>Semestre / Ciclo:</label>
+          <input type="text" id="meta-semestre" class="form-control" placeholder="Ej: 4° Ciclo" />
         </div>
         <div class="form-group">
-          <label>Empresa Formadora:</label>
-          <input type="text" id="meta-empresa" class="form-control" />
+          <label>CFP / Escuela:</label>
+          <input type="text" id="meta-escuela" class="form-control" placeholder="Ej: ETI (Escuela de Tecnologías de la Información)" />
         </div>
         <div class="form-group">
-          <label>Área de Práctica:</label>
-          <input type="text" id="meta-area" class="form-control" />
-        </div>
-        <div class="form-group">
-          <label>Monitor de Empresa:</label>
-          <input type="text" id="meta-monitor" class="form-control" placeholder="Nombre del monitor técnico" />
+          <label>Bloque / Grupo:</label>
+          <input type="text" id="meta-bloque" class="form-control" placeholder="Ej: 406" />
         </div>
         <div class="form-group">
           <label>Instructor SENATI:</label>
-          <input type="text" id="meta-instructor" class="form-control" placeholder="Nombre del docente/tutor" />
+          <input type="text" id="meta-instructor" class="form-control" placeholder="Nombre del docente/instructor" />
+        </div>
+      </div>
+
+      <!-- DATOS DE EMPRESA FORMADORA (SOLO MODO EMPRESA O SI SE ACTIVA) -->
+      <div id="empresa-meta-fields" class="form-grid-3" style="margin-top: 1rem; border-top: 1px dashed var(--border); padding-top: 1rem;">
+        <div class="form-group">
+          <label>Empresa Formadora:</label>
+          <input type="text" id="meta-empresa" class="form-control" placeholder="Nombre de la empresa patrocinadora" />
+        </div>
+        <div class="form-group">
+          <label>Área de Práctica:</label>
+          <input type="text" id="meta-area" class="form-control" placeholder="Ej: Departamento de TI" />
+        </div>
+        <div class="form-group">
+          <label>Monitor de Empresa:</label>
+          <input type="text" id="meta-monitor" class="form-control" placeholder="Nombre del monitor técnico en empresa" />
         </div>
       </div>
     </section>
@@ -649,16 +661,17 @@
       <table class="print-meta-table">
         <tr>
           <td><strong>ESTUDIANTE:</strong> <span id="pr-sem-estudiante"></span></td>
-          <td><strong>ID:</strong> <span id="pr-sem-matricula"></span></td>
-          <td><strong>SEMESTRE:</strong> <span id="pr-sem-semestre"></span></td>
+          <td><strong>ID ESTUDIANTE:</strong> <span id="pr-sem-matricula"></span></td>
+          <td><strong>SEMESTRE / CICLO:</strong> <span id="pr-sem-semestre"></span></td>
         </tr>
         <tr>
           <td><strong>CARRERA:</strong> <span id="pr-sem-carrera"></span></td>
-          <td colspan="2"><strong>CURSO / BLOQUE:</strong> <span id="pr-sem-curso">Seminario de Práctica / PAWD</span></td>
+          <td><strong>CFP / ESCUELA:</strong> <span id="pr-sem-escuela"></span></td>
+          <td><strong>BLOQUE / GRUPO:</strong> <span id="pr-sem-bloque"></span></td>
         </tr>
         <tr>
-          <td><strong>INSTRUCTOR:</strong> <span id="pr-sem-instructor"></span></td>
-          <td colspan="2"><strong>EMPRESA / ENTORNO:</strong> <span id="pr-sem-empresa"></span></td>
+          <td colspan="2"><strong>INSTRUCTOR DEL CURSO:</strong> <span id="pr-sem-instructor"></span></td>
+          <td><strong>TIPO DOCUMENTO:</strong> <span>Informe de Clase (PAWD-301)</span></td>
         </tr>
       </table>
 
