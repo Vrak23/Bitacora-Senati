@@ -1001,6 +1001,280 @@ body {
 }
 
 /* ==================================================== */
+/* INFORME DE SEMINARIO (4 ACTIVIDADES Y EVIDENCIAS)   */
+/* ==================================================== */
+.activity-pills-bar {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  margin-bottom: 1.25rem;
+  background: rgba(15, 23, 42, 0.6);
+  padding: 0.65rem 1rem;
+  border-radius: 12px;
+  border: 1px solid var(--border);
+  flex-wrap: wrap;
+}
+
+.activity-bar-label {
+  font-size: 0.85rem;
+  font-weight: 600;
+  color: var(--text-muted);
+}
+
+.activity-pills {
+  display: flex;
+  gap: 0.5rem;
+  flex-wrap: wrap;
+}
+
+.act-pill {
+  background: #090e1a;
+  border: 1px solid var(--border);
+  color: var(--text-muted);
+  padding: 0.4rem 0.85rem;
+  border-radius: 8px;
+  font-size: 0.82rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.act-pill:hover {
+  border-color: var(--primary);
+  color: var(--text-main);
+}
+
+.act-pill.active {
+  background: var(--primary);
+  border-color: var(--primary);
+  color: #0b1120;
+  font-weight: 700;
+  box-shadow: 0 0 12px var(--accent-glow);
+}
+
+.act-editor-box {
+  background: rgba(15, 23, 42, 0.4);
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  padding: 1.25rem;
+}
+
+.evidencias-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 1.25rem;
+  margin-top: 1rem;
+}
+
+@media (max-width: 868px) {
+  .evidencias-grid {
+    grid-template-columns: 1fr;
+  }
+}
+
+.evidencia-box {
+  background: #090e1a;
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  padding: 1rem;
+  display: flex;
+  flex-direction: column;
+}
+
+.evidencia-head {
+  margin-bottom: 0.75rem;
+  padding-bottom: 0.5rem;
+  border-bottom: 1px solid var(--border);
+}
+
+.evidencia-head h3 {
+  font-size: 0.92rem;
+  font-weight: 700;
+  color: var(--primary);
+}
+
+.url-input-group {
+  display: flex;
+  flex-direction: column;
+  gap: 0.4rem;
+}
+
+.url-quick-btns {
+  display: flex;
+  gap: 0.35rem;
+  flex-wrap: wrap;
+}
+
+.btn-quick-url {
+  background: rgba(56, 189, 248, 0.1);
+  border: 1px solid rgba(56, 189, 248, 0.25);
+  color: var(--primary);
+  font-size: 0.72rem;
+  padding: 0.2rem 0.5rem;
+  border-radius: 6px;
+  cursor: pointer;
+  transition: all 0.15s ease;
+}
+
+.btn-quick-url:hover {
+  background: rgba(56, 189, 248, 0.25);
+}
+
+.dropzone-box {
+  position: relative;
+  border: 2px dashed var(--border);
+  border-radius: 10px;
+  padding: 1.25rem 1rem;
+  text-align: center;
+  background: rgba(11, 17, 32, 0.5);
+  cursor: pointer;
+  transition: all 0.2s ease;
+  min-height: 180px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.dropzone-box:hover, .dropzone-box.dragover {
+  border-color: var(--primary);
+  background: rgba(56, 189, 248, 0.05);
+}
+
+.file-hidden-input {
+  position: absolute;
+  inset: 0;
+  opacity: 0;
+  width: 100%;
+  height: 100%;
+  cursor: pointer;
+  z-index: 5;
+}
+
+.dropzone-empty {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.4rem;
+  pointer-events: none;
+}
+
+.dropzone-icon {
+  font-size: 2.2rem;
+}
+
+.dropzone-empty p {
+  font-size: 0.85rem;
+  color: var(--text-main);
+  margin: 0;
+}
+
+.dropzone-empty small {
+  font-size: 0.75rem;
+  color: var(--text-dim);
+}
+
+.dropzone-preview {
+  position: relative;
+  width: 100%;
+  z-index: 10;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}
+
+.dropzone-preview img {
+  max-width: 100%;
+  max-height: 220px;
+  object-fit: contain;
+  border-radius: 8px;
+  border: 1px solid var(--border);
+  box-shadow: 0 4px 15px rgba(0,0,0,0.5);
+}
+
+.preview-actions {
+  display: flex;
+  gap: 0.5rem;
+  margin-top: 0.65rem;
+}
+
+.btn-preview-action {
+  border: none;
+  padding: 0.35rem 0.75rem;
+  border-radius: 6px;
+  font-size: 0.75rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.15s ease;
+}
+
+.btn-preview-action.view {
+  background: #1e293b;
+  color: #38bdf8;
+  border: 1px solid #38bdf8;
+}
+
+.btn-preview-action.remove {
+  background: rgba(239, 68, 68, 0.15);
+  color: #f87171;
+  border: 1px solid #ef4444;
+}
+
+.btn-preview-action:hover {
+  transform: translateY(-1px);
+}
+
+/* MODAL DE IMAGEN FULLSCREEN */
+.img-modal-backdrop {
+  position: fixed;
+  inset: 0;
+  z-index: 999999;
+  background: rgba(5, 9, 18, 0.92);
+  backdrop-filter: blur(8px);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 1.5rem;
+}
+
+.img-modal-content {
+  position: relative;
+  max-width: 90vw;
+  max-height: 90vh;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}
+
+.img-modal-close {
+  position: absolute;
+  top: -40px;
+  right: -10px;
+  background: none;
+  border: none;
+  color: white;
+  font-size: 2.2rem;
+  cursor: pointer;
+  line-height: 1;
+}
+
+.img-modal-content img {
+  max-width: 100%;
+  max-height: 80vh;
+  object-fit: contain;
+  border-radius: 10px;
+  box-shadow: 0 20px 50px rgba(0,0,0,0.8);
+  border: 1px solid rgba(255,255,255,0.15);
+}
+
+.img-modal-caption {
+  margin-top: 0.85rem;
+  color: var(--primary);
+  font-size: 0.9rem;
+  font-weight: 600;
+  text-align: center;
+}
+
+/* ==================================================== */
 /* MEDIA PRINT (FORMATO OFICIAL SENATI A4)              */
 /* ==================================================== */
 @media print {
@@ -1143,5 +1417,83 @@ body {
     text-align: center;
     padding-top: 5px;
     font-size: 8.5pt;
+  }
+
+  /* ESTILOS DE EVIDENCIAS EN IMPRESIÓN SEMINARIO */
+  .pr-actividad-item {
+    page-break-inside: avoid;
+    border: 1px solid #000;
+    padding: 8px;
+    margin-bottom: 10px;
+  }
+
+  .pr-act-header {
+    font-weight: bold;
+    font-size: 9.5pt;
+    margin-bottom: 4px;
+    border-bottom: 1px dashed #000;
+    padding-bottom: 3px;
+  }
+
+  .pr-act-desc {
+    font-size: 8.5pt;
+    font-style: italic;
+    margin-bottom: 6px;
+    color: #333;
+  }
+
+  .pr-evidence-subgrid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 8px;
+  }
+
+  .pr-evidence-col {
+    border: 1px solid #ccc;
+    padding: 4px;
+    background: #fafafa !important;
+  }
+
+  .pr-browser-bar {
+    background: #e2e8f0 !important;
+    border: 1px solid #cbd5e1;
+    padding: 2px 6px;
+    font-family: monospace;
+    font-size: 7.5pt;
+    color: #334155;
+    border-radius: 4px 4px 0 0;
+    display: flex;
+    align-items: center;
+    gap: 4px;
+    margin-bottom: 4px;
+  }
+
+  .pr-codesnap-bar {
+    background: #1e293b !important;
+    color: #38bdf8 !important;
+    padding: 2px 6px;
+    font-family: monospace;
+    font-size: 7.5pt;
+    font-weight: bold;
+    border-radius: 4px 4px 0 0;
+    margin-bottom: 4px;
+  }
+
+  .pr-evidence-img {
+    max-width: 100%;
+    max-height: 170px;
+    display: block;
+    margin: 0 auto;
+    object-fit: contain;
+  }
+
+  .pr-no-img {
+    height: 90px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 8pt;
+    color: #777;
+    border: 1px dashed #bbb;
   }
 }

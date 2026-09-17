@@ -68,6 +68,13 @@
           <small>Formato Quincenal (2 Semanas)</small>
         </span>
       </button>
+      <button id="btn-fmt-seminario" class="format-tab-btn" type="button">
+        <span class="tab-icon">🎓</span>
+        <span class="tab-text">
+          <strong>Informe de Seminario</strong>
+          <small>4 Actividades / Evidencias Visuales</small>
+        </span>
+      </button>
     </div>
 
     <!-- BARRA DE SEMANAS / PERIODOS -->
@@ -261,6 +268,104 @@
         <div class="form-group">
           <label>Observaciones y Recomendaciones del Monitor de Empresa:</label>
           <textarea id="emp-observaciones" class="form-control" rows="2" placeholder="El estudiante demuestra gran compromiso, autonomía técnica y excelente disposición..."></textarea>
+        </div>
+      </div>
+    </section>
+
+    <!-- SECCIÓN 4: EVIDENCIAS VISUALES DE LAS 4 ACTIVIDADES (MODO SEMINARIO) -->
+    <section id="seminario-evidencias-card" class="card-section" style="display: none;">
+      <div class="section-head">
+        <h2>📸 4. Evidencias Visuales de las 4 Últimas Actividades</h2>
+      </div>
+      <p class="section-desc" style="color: var(--text-muted, #94a3b8); margin-bottom: 1rem; font-size: 0.9rem;">
+        Carga las capturas de pantalla de la <strong>Interfaz Web (UI)</strong> y del <strong>Código Fuente (CodeSnap)</strong> para cada una de las 4 actividades requeridas en tu informe de seminario SENATI.
+      </p>
+
+      <!-- BARRA DE ACTIVIDADES (1 a 4) -->
+      <div class="activity-pills-bar">
+        <span class="activity-bar-label">Seleccionar Actividad:</span>
+        <div class="activity-pills">
+          <button id="btn-act-1" class="act-pill active" type="button">Actividad 1</button>
+          <button id="btn-act-2" class="act-pill" type="button">Actividad 2</button>
+          <button id="btn-act-3" class="act-pill" type="button">Actividad 3</button>
+          <button id="btn-act-4" class="act-pill" type="button">Actividad 4</button>
+        </div>
+      </div>
+
+      <div class="act-editor-box">
+        <div class="form-group" style="margin-bottom: 1rem;">
+          <label>Título / Denominación de la <span id="act-editing-num-label">Actividad 1</span>:</label>
+          <input type="text" id="sem-act-titulo" class="form-control" placeholder="Ej: Semana 1: Desarrollo del módulo de Login y Rutas SPA en Angular" />
+        </div>
+
+        <div class="form-group" style="margin-bottom: 1.25rem;">
+          <label>Descripción / Observaciones técnicas de la actividad:</label>
+          <textarea id="sem-act-descripcion" class="form-control" rows="2" placeholder="Explicación breve de la funcionalidad o módulo implementado en esta evidencia..."></textarea>
+        </div>
+
+        <div class="evidencias-grid">
+          <!-- EVIDENCIA 1: UI / INTERFAZ WEB -->
+          <div class="evidencia-box">
+            <div class="evidencia-head">
+              <h3>🌐 Evidencia 1: Captura de Interfaz Web (UI)</h3>
+            </div>
+            
+            <div class="form-group" style="margin-bottom: 0.75rem;">
+              <label>URL de servidor / navegación:</label>
+              <div class="url-input-group">
+                <input type="text" id="sem-url-ui" class="form-control" placeholder="Ej: http://localhost:4200/ o https://mi-proyecto.vercel.app/" />
+                <div class="url-quick-btns">
+                  <button type="button" class="btn-quick-url" data-url="http://localhost:4200/">Localhost:4200</button>
+                  <button type="button" class="btn-quick-url" data-url="http://localhost:3000/">Localhost:3000</button>
+                  <button type="button" class="btn-quick-url" data-url="https://mi-proyecto.vercel.app/">Vercel</button>
+                </div>
+              </div>
+            </div>
+
+            <div id="dropzone-ui" class="dropzone-box">
+              <input type="file" id="file-ui-img" accept="image/*" class="file-hidden-input" />
+              <div id="ui-dropzone-empty" class="dropzone-empty">
+                <span class="dropzone-icon">🖼️</span>
+                <p><strong>Arrastra aquí la captura de la interfaz</strong> o haz clic para seleccionar</p>
+                <small>Formatos: PNG, JPG, WebP (compresión automática)</small>
+              </div>
+              <div id="ui-dropzone-preview" class="dropzone-preview" style="display: none;">
+                <img id="img-preview-ui" src="" alt="Captura UI" />
+                <div class="preview-actions">
+                  <button id="btn-view-ui" type="button" class="btn-preview-action view" title="Ver pantalla completa">🔍 Ampliar</button>
+                  <button id="btn-remove-ui" type="button" class="btn-preview-action remove" title="Eliminar imagen">🗑️ Eliminar</button>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- EVIDENCIA 2: CÓDIGO (CODESNAP) -->
+          <div class="evidencia-box">
+            <div class="evidencia-head">
+              <h3>💻 Evidencia 2: Captura de Código Fuente (CodeSnap)</h3>
+            </div>
+
+            <div class="form-group" style="margin-bottom: 0.75rem;">
+              <label>Etiqueta / Nombre del archivo de código:</label>
+              <input type="text" id="sem-tag-codigo" class="form-control" placeholder="Ej: app.routes.ts: o PetShop.component.ts:" />
+            </div>
+
+            <div id="dropzone-codigo" class="dropzone-box">
+              <input type="file" id="file-codigo-img" accept="image/*" class="file-hidden-input" />
+              <div id="codigo-dropzone-empty" class="dropzone-empty">
+                <span class="dropzone-icon">⚡</span>
+                <p><strong>Arrastra aquí la captura del código CodeSnap</strong> o haz clic para seleccionar</p>
+                <small>Formatos: PNG, JPG, WebP (compresión automática)</small>
+              </div>
+              <div id="codigo-dropzone-preview" class="dropzone-preview" style="display: none;">
+                <img id="img-preview-codigo" src="" alt="Captura Código" />
+                <div class="preview-actions">
+                  <button id="btn-view-codigo" type="button" class="btn-preview-action view" title="Ver pantalla completa">🔍 Ampliar</button>
+                  <button id="btn-remove-codigo" type="button" class="btn-preview-action remove" title="Eliminar imagen">🗑️ Eliminar</button>
+                </div>
+              </div>
+            </div>
+          </div>
         </div>
       </div>
     </section>
@@ -527,6 +632,84 @@
       </div>
     </div>
 
+    <!-- 3. FORMATO SEMINARIO: INFORME DE PRÁCTICA Y SEMINARIO (4 ACTIVIDADES CON EVIDENCIAS VISUALES) -->
+    <div id="print-view-seminario" class="print-page" style="display: none;">
+      <div class="print-header">
+        <div class="print-logo-senati">SENATI</div>
+        <div class="print-header-center">
+          <h3>SERVICIO NACIONAL DE ADIESTRAMIENTO EN TRABAJO INDUSTRIAL</h3>
+          <h4>DIRECCIÓN ZONAL / ESCUELA DE TECNOLOGÍAS DE LA INFORMACIÓN</h4>
+          <strong style="font-size: 11pt;">INFORME DE CLASE Y SEMINARIO DE PRÁCTICAS (PAWD-301)</strong>
+        </div>
+        <div style="font-size: 8.5pt; font-weight: bold; border: 1px solid #000; padding: 4px; text-align: center;">
+          FORMATO PAWD-301<br>SEMINARIO
+        </div>
+      </div>
+
+      <table class="print-meta-table">
+        <tr>
+          <td><strong>ESTUDIANTE:</strong> <span id="pr-sem-estudiante"></span></td>
+          <td><strong>ID:</strong> <span id="pr-sem-matricula"></span></td>
+          <td><strong>SEMESTRE:</strong> <span id="pr-sem-semestre"></span></td>
+        </tr>
+        <tr>
+          <td><strong>CARRERA:</strong> <span id="pr-sem-carrera"></span></td>
+          <td colspan="2"><strong>CURSO / BLOQUE:</strong> <span id="pr-sem-curso">Seminario de Práctica / PAWD</span></td>
+        </tr>
+        <tr>
+          <td><strong>INSTRUCTOR:</strong> <span id="pr-sem-instructor"></span></td>
+          <td colspan="2"><strong>EMPRESA / ENTORNO:</strong> <span id="pr-sem-empresa"></span></td>
+        </tr>
+      </table>
+
+      <!-- I. TAREA MÁS SIGNIFICATIVA Y DESCRIPCIÓN -->
+      <div class="print-section-title">I. TAREA MÁS SIGNIFICATIVA Y DESCRIPCIÓN DEL PROCESO</div>
+      <div style="font-weight: bold; margin-bottom: 4px; font-size: 9.5pt;">
+        Tarea / Proyecto: <span id="pr-sem-ts-titulo"></span>
+      </div>
+      <div class="print-box-content" id="pr-sem-ts-proceso" style="min-height: 80px; margin-bottom: 8px;"></div>
+
+      <!-- II. EVIDENCIAS VISUALES DE LAS 4 ACTIVIDADES -->
+      <div class="print-section-title">II. EVIDENCIAS VISUALES DE LAS 4 ACTIVIDADES DESARROLLADAS</div>
+      <div id="pr-sem-evidencias-container">
+        <!-- Generado dinámicamente desde app.js con capturas de UI y Código -->
+      </div>
+
+      <!-- III. NORMAS TÉCNICAS Y MEDIO AMBIENTE -->
+      <div class="print-section-title">III. NORMAS TÉCNICAS, SEGURIDAD Y CUIDADO AMBIENTAL</div>
+      <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 8px; margin-bottom: 8px;">
+        <div>
+          <div style="font-weight: bold; font-size: 8.5pt;">Seguridad y Ergonomía Ocupacional:</div>
+          <div style="border: 1px solid #000; padding: 4px; font-size: 8pt; min-height: 40px;" id="pr-sem-ts-seguridad"></div>
+        </div>
+        <div>
+          <div style="font-weight: bold; font-size: 8.5pt;">Equipos, Software y Herramientas:</div>
+          <div style="border: 1px solid #000; padding: 4px; font-size: 8pt; min-height: 40px;" id="pr-sem-ts-herramientas"></div>
+        </div>
+      </div>
+
+      <!-- IV. FIRMAS -->
+      <div class="print-signatures-row" style="margin-top: 20px;">
+        <div class="signature-box">
+          <div style="height: 45px;"></div>
+          Firma del Estudiante
+        </div>
+        <div class="signature-box">
+          <div style="height: 45px;"></div>
+          Firma y Nota del Instructor SENATI
+        </div>
+      </div>
+    </div>
+
+  </div>
+
+  <!-- MODAL DE VISTA PREVIA DE IMAGEN EN PANTALLA COMPLETA -->
+  <div id="img-fullscreen-modal" class="img-modal-backdrop" style="display: none;">
+    <div class="img-modal-content">
+      <button id="btn-close-modal" type="button" class="img-modal-close" title="Cerrar">&times;</button>
+      <img id="modal-full-img" src="" alt="Vista previa de evidencia" />
+      <div id="modal-img-caption" class="img-modal-caption"></div>
+    </div>
   </div>
 
   <script type="module" src="./src/app.js"></script>

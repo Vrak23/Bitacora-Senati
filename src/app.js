@@ -3,6 +3,46 @@ import { PLANTILLAS_DEV } from './templates.js';
 // Estado de la aplicación
 const STORAGE_KEY = 'senati_bitacora_data';
 
+function getEmptySeminarioData() {
+  return {
+    actividadActual: 1,
+    actividades: {
+      1: {
+        titulo: 'Semana 1: Desarrollo del módulo PetShop y enrutamiento SPA en Angular',
+        descripcion: 'Creación del proyecto con arquitectura Standalone Components, configuración del enrutamiento SPA en app.routes.ts y maquetación de la navegación responsiva.',
+        urlUi: 'http://localhost:4200/',
+        imgUi: '',
+        imgCodigo: '',
+        tagCodigo: 'app.routes.ts:'
+      },
+      2: {
+        titulo: 'Semana 2: Formularios Template-Driven y Validaciones Sintácticas',
+        descripcion: 'Registro de mascotas con enlace bidireccional [(ngModel)] y registro de clientes con validación de expresiones regulares para DNI y email.',
+        urlUi: 'http://localhost:4200/',
+        imgUi: '',
+        imgCodigo: '',
+        tagCodigo: 'PetShop.component.ts:'
+      },
+      3: {
+        titulo: 'Semana 3: Formulario Reactivo de Adopciones y Servicios Asíncronos',
+        descripcion: 'Módulo de solicitudes de adopción implementado con Reactive Forms (FormBuilder) y servicio HTTP para enlace de datos.',
+        urlUi: 'http://localhost:4200/',
+        imgUi: '',
+        imgCodigo: '',
+        tagCodigo: 'Adopciones.service.ts:'
+      },
+      4: {
+        titulo: 'Semana 4: Dashboard de Métricas, KPIs y Despliegue en Servidor',
+        descripcion: 'Diseño del panel de control con tarjetas KPI, tabla de historial de solicitudes y verificación de despliegue en servidor local.',
+        urlUi: 'http://localhost:4200/',
+        imgUi: '',
+        imgCodigo: '',
+        tagCodigo: 'Dashboard.component.ts:'
+      }
+    }
+  };
+}
+
 const DEFAULT_DATA = {
   estudiante: 'Rodrigo Llanos',
   matricula: '',
@@ -12,12 +52,13 @@ const DEFAULT_DATA = {
   area: 'Desarrollo de Software',
   monitor: '',
   instructor: '',
-  modoFormato: 'semanal', // 'semanal' | 'empresa'
+  modoFormato: 'semanal', // 'semanal' | 'empresa' | 'seminario'
   semanaActual: 1,       // 1..16
   quincenaActual: 1,     // 1..8
   subSemanaEmpresa: 1,   // 1 (Semana A) | 2 (Semana B)
   semanas: {},
-  informesEmpresa: {}
+  informesEmpresa: {},
+  informeSeminario: getEmptySeminarioData()
 };
 
 function getEmptyWeek(semNum) {
@@ -71,13 +112,24 @@ function loadData() {
         ...DEFAULT_DATA,
         ...parsed,
         semanas: parsed.semanas || {},
-        informesEmpresa: parsed.informesEmpresa || {}
+        informesEmpresa: parsed.informesEmpresa || {},
+        informeSeminario: {
+          ...getEmptySeminarioData(),
+          ...(parsed.informeSeminario || {}),
+          actividades: {
+            ...getEmptySeminarioData().actividades,
+            ...(parsed.informeSeminario?.actividades || {})
+          }
+        }
       };
     } catch (e) {
       console.warn('Error parsing storage:', e);
     }
   }
-  return JSON.parse(JSON.stringify(DEFAULT_DATA));
+  return {
+    ...JSON.parse(JSON.stringify(DEFAULT_DATA)),
+    informeSeminario: getEmptySeminarioData()
+  };
 }
 
 function saveData() {
@@ -130,6 +182,23 @@ function getEmpresaData(q) {
   return appData.informesEmpresa[q];
 }
 
+function getSeminarioActividad(actNum) {
+  if (!appData.informeSeminario) {
+    appData.informeSeminario = getEmptySeminarioData();
+  }
+  if (!appData.informeSeminario.actividades[actNum]) {
+    appData.informeSeminario.actividades[actNum] = {
+      titulo: `Actividad ${actNum}`,
+      descripcion: '',
+      urlUi: 'http://localhost:4200/',
+      imgUi: '',
+      imgCodigo: '',
+      tagCodigo: ''
+    };
+  }
+  return appData.informeSeminario.actividades[actNum];
+}
+
 function getWeekTotalHours(wk) {
   const dias = ['lunes', 'martes', 'miercoles', 'jueves', 'viernes', 'sabado'];
   let total = 0;
@@ -160,29 +229,46 @@ function setModoFormato(nuevoModo) {
 function updateFormatUI() {
   const btnSemanal = document.getElementById('btn-fmt-semanal');
   const btnEmpresa = document.getElementById('btn-fmt-empresa');
-  const periodsLabel = document.getElementById('periods-label');
+  const btnSeminario = document.getElementById('btn-fmt-seminario');
+
+  const weeksBar = document.querySelector('.weeks-bar');
   const subweeksBar = document.getElementById('empresa-subweeks-bar');
   const empresaEvalCard = document.getElementById('empresa-eval-card');
+  const seminarioCard = document.getElementById('seminario-evidencias-card');
+  const section2Plan = document.querySelector('.card-section:nth-of-type(2)');
   const sec3Title = document.getElementById('section-3-title');
   const tsLabelTitulo = document.getElementById('ts-label-titulo');
 
-  const esSemanal = appData.modoFormato === 'semanal';
+  const modo = appData.modoFormato;
 
-  btnSemanal?.classList.toggle('active', esSemanal);
-  btnEmpresa?.classList.toggle('active', !esSemanal);
+  btnSemanal?.classList.toggle('active', modo === 'semanal');
+  btnEmpresa?.classList.toggle('active', modo === 'empresa');
+  btnSeminario?.classList.toggle('active', modo === 'seminario');
 
-  if (esSemanal) {
-    if (periodsLabel) periodsLabel.innerText = '📅 Seleccionar Semana:';
+  if (modo === 'semanal') {
+    if (weeksBar) weeksBar.style.display = 'flex';
     if (subweeksBar) subweeksBar.style.display = 'none';
     if (empresaEvalCard) empresaEvalCard.style.display = 'none';
+    if (seminarioCard) seminarioCard.style.display = 'none';
+    if (section2Plan) section2Plan.style.display = 'block';
     if (sec3Title) sec3Title.innerText = '3. Tarea Más Significativa de la Semana';
     if (tsLabelTitulo) tsLabelTitulo.innerText = 'Denominación de la Tarea / Proyecto:';
-  } else {
-    if (periodsLabel) periodsLabel.innerText = '🏢 Seleccionar Quincena (2 Semanas):';
+  } else if (modo === 'empresa') {
+    if (weeksBar) weeksBar.style.display = 'flex';
     if (subweeksBar) subweeksBar.style.display = 'flex';
     if (empresaEvalCard) empresaEvalCard.style.display = 'block';
+    if (seminarioCard) seminarioCard.style.display = 'none';
+    if (section2Plan) section2Plan.style.display = 'block';
     if (sec3Title) sec3Title.innerText = '3. Tarea / Proyecto Principal de la Quincena';
     if (tsLabelTitulo) tsLabelTitulo.innerText = 'Denominación del Proyecto en Empresa:';
+  } else if (modo === 'seminario') {
+    if (weeksBar) weeksBar.style.display = 'none';
+    if (subweeksBar) subweeksBar.style.display = 'none';
+    if (empresaEvalCard) empresaEvalCard.style.display = 'none';
+    if (seminarioCard) seminarioCard.style.display = 'block';
+    if (section2Plan) section2Plan.style.display = 'none';
+    if (sec3Title) sec3Title.innerText = '2. Tarea Más Significativa del Seminario';
+    if (tsLabelTitulo) tsLabelTitulo.innerText = 'Denominación del Proyecto / Módulo Integrador:';
   }
 }
 
@@ -213,7 +299,7 @@ function renderWeeksBar() {
         }, 50);
       }
     }
-  } else {
+  } else if (appData.modoFormato === 'empresa') {
     for (let q = 1; q <= 8; q++) {
       const { semA, semB } = getQuincenaWeeks(q);
       const btn = document.createElement('button');
@@ -274,11 +360,11 @@ function populateForm() {
   document.getElementById('meta-monitor').value = appData.monitor || '';
   document.getElementById('meta-instructor').value = appData.instructor || '';
 
-  const esSemanal = appData.modoFormato === 'semanal';
+  const modo = appData.modoFormato;
   const displayLabel = document.getElementById('display-semana-label');
   const displayNum = document.getElementById('display-semana-num');
 
-  if (esSemanal) {
+  if (modo === 'semanal') {
     const currentSem = appData.semanaActual;
     if (displayLabel) displayLabel.innerText = '2. Plan Semanal de Trabajo — Semana';
     if (displayNum) displayNum.innerText = currentSem;
@@ -305,7 +391,7 @@ function populateForm() {
     document.getElementById('ts-herramientas').value = wk.tareaSignificativa?.herramientas || '';
 
     calcTotalHours();
-  } else {
+  } else if (modo === 'empresa') {
     // MODO EMPRESA (QUINCENAL 2 SEMANAS)
     const { semA, semB } = getQuincenaWeeks(appData.quincenaActual);
     const subSemNum = appData.subSemanaEmpresa === 1 ? semA : semB;
@@ -350,6 +436,70 @@ function populateForm() {
     document.getElementById('emp-observaciones').value = empData.observaciones || '';
 
     calcTotalHours();
+  } else if (modo === 'seminario') {
+    // MODO SEMINARIO (4 ACTIVIDADES CON EVIDENCIAS)
+    const semData = appData.informeSeminario;
+    const actNum = semData.actividadActual || 1;
+
+    const act = getSeminarioActividad(actNum);
+
+    // Tarea Significativa global del seminario
+    document.getElementById('ts-titulo').value = semData.tituloGlobal || act.titulo || '';
+    document.getElementById('ts-proceso').value = semData.procesoGlobal || '1. Análisis de requerimientos y configuración del entorno de desarrollo.\n2. Maquetación responsive y estructura de componentes.\n3. Lógica de negocio, estado y conexión a API/servicios.\n4. Pruebas funcionales en servidor local/cloud y control de errores.';
+    document.getElementById('ts-seguridad').value = semData.seguridadGlobal || '• Ergonomía frente a la pantalla (postura a 90° y descansos según regla 20-20-20).\n• Ahorro de energía en la estación de trabajo y política de cero papel.';
+    document.getElementById('ts-herramientas').value = semData.herramientasGlobal || 'Visual Studio Code, Angular, Node.js, Postman, Chrome DevTools, Git, Windows 11.';
+
+    renderSeminarioActivityUI();
+  }
+}
+
+function renderSeminarioActivityUI() {
+  const semData = appData.informeSeminario;
+  const actNum = semData.actividadActual || 1;
+  const act = getSeminarioActividad(actNum);
+
+  // Actualizar píldoras de actividad
+  for (let i = 1; i <= 4; i++) {
+    const btn = document.getElementById(`btn-act-${i}`);
+    if (btn) btn.classList.toggle('active', i === actNum);
+  }
+
+  const actLabel = document.getElementById('act-editing-num-label');
+  if (actLabel) actLabel.innerText = `Actividad ${actNum}`;
+
+  document.getElementById('sem-act-titulo').value = act.titulo || '';
+  document.getElementById('sem-act-descripcion').value = act.descripcion || '';
+  document.getElementById('sem-url-ui').value = act.urlUi || 'http://localhost:4200/';
+  document.getElementById('sem-tag-codigo').value = act.tagCodigo || '';
+
+  // Vista previa UI Image
+  const uiEmpty = document.getElementById('ui-dropzone-empty');
+  const uiPreview = document.getElementById('ui-dropzone-preview');
+  const uiImg = document.getElementById('img-preview-ui');
+
+  if (act.imgUi) {
+    uiImg.src = act.imgUi;
+    uiEmpty.style.display = 'none';
+    uiPreview.style.display = 'flex';
+  } else {
+    uiImg.src = '';
+    uiEmpty.style.display = 'flex';
+    uiPreview.style.display = 'none';
+  }
+
+  // Vista previa Código Image
+  const codEmpty = document.getElementById('codigo-dropzone-empty');
+  const codPreview = document.getElementById('codigo-dropzone-preview');
+  const codImg = document.getElementById('img-preview-codigo');
+
+  if (act.imgCodigo) {
+    codImg.src = act.imgCodigo;
+    codEmpty.style.display = 'none';
+    codPreview.style.display = 'flex';
+  } else {
+    codImg.src = '';
+    codEmpty.style.display = 'flex';
+    codPreview.style.display = 'none';
   }
 }
 
@@ -364,29 +514,44 @@ function readFormToCurrentState() {
   appData.monitor = document.getElementById('meta-monitor').value;
   appData.instructor = document.getElementById('meta-instructor').value;
 
-  const currentSem = getCurrentActiveWeekNum();
-  const wk = getWeekData(currentSem);
+  const modo = appData.modoFormato;
 
-  wk.fechaInicio = document.getElementById('meta-fecha-inicio').value;
-  wk.fechaFin = document.getElementById('meta-fecha-fin').value;
+  if (modo === 'semanal') {
+    const currentSem = appData.semanaActual;
+    const wk = getWeekData(currentSem);
 
-  const dias = ['lunes', 'martes', 'miercoles', 'jueves', 'viernes', 'sabado'];
-  dias.forEach(d => {
-    wk.dias[d] = {
-      tarea: document.getElementById(`dia-${d}-tarea`).value,
-      horas: Number(document.getElementById(`dia-${d}-horas`).value) || 0
-    };
-  });
+    wk.fechaInicio = document.getElementById('meta-fecha-inicio').value;
+    wk.fechaFin = document.getElementById('meta-fecha-fin').value;
 
-  if (appData.modoFormato === 'semanal') {
+    const dias = ['lunes', 'martes', 'miercoles', 'jueves', 'viernes', 'sabado'];
+    dias.forEach(d => {
+      wk.dias[d] = {
+        tarea: document.getElementById(`dia-${d}-tarea`).value,
+        horas: Number(document.getElementById(`dia-${d}-horas`).value) || 0
+      };
+    });
+
     wk.tareaSignificativa = {
       titulo: document.getElementById('ts-titulo').value,
       proceso: document.getElementById('ts-proceso').value,
       seguridad: document.getElementById('ts-seguridad').value,
       herramientas: document.getElementById('ts-herramientas').value
     };
-  } else {
-    // Guardar informe quincenal de empresa
+  } else if (modo === 'empresa') {
+    const currentSem = getCurrentActiveWeekNum();
+    const wk = getWeekData(currentSem);
+
+    wk.fechaInicio = document.getElementById('meta-fecha-inicio').value;
+    wk.fechaFin = document.getElementById('meta-fecha-fin').value;
+
+    const dias = ['lunes', 'martes', 'miercoles', 'jueves', 'viernes', 'sabado'];
+    dias.forEach(d => {
+      wk.dias[d] = {
+        tarea: document.getElementById(`dia-${d}-tarea`).value,
+        horas: Number(document.getElementById(`dia-${d}-horas`).value) || 0
+      };
+    });
+
     const empData = getEmpresaData(appData.quincenaActual);
     empData.titulo = document.getElementById('ts-titulo').value;
     empData.proceso = document.getElementById('ts-proceso').value;
@@ -396,7 +561,58 @@ function readFormToCurrentState() {
     empData.seguridadEmpresa = document.getElementById('emp-seguridad').value;
     empData.calidad = document.getElementById('emp-calidad').value;
     empData.observaciones = document.getElementById('emp-observaciones').value;
+  } else if (modo === 'seminario') {
+    const semData = appData.informeSeminario;
+    semData.tituloGlobal = document.getElementById('ts-titulo').value;
+    semData.procesoGlobal = document.getElementById('ts-proceso').value;
+    semData.seguridadGlobal = document.getElementById('ts-seguridad').value;
+    semData.herramientasGlobal = document.getElementById('ts-herramientas').value;
+
+    readSeminarioActivityFormToState();
   }
+}
+
+function readSeminarioActivityFormToState() {
+  const semData = appData.informeSeminario;
+  const actNum = semData.actividadActual || 1;
+  const act = getSeminarioActividad(actNum);
+
+  act.titulo = document.getElementById('sem-act-titulo').value;
+  act.descripcion = document.getElementById('sem-act-descripcion').value;
+  act.urlUi = document.getElementById('sem-url-ui').value;
+  act.tagCodigo = document.getElementById('sem-tag-codigo').value;
+}
+
+function compressAndConvertImage(file, maxWidth = 1200, quality = 0.85) {
+  return new Promise((resolve, reject) => {
+    const reader = new FileReader();
+    reader.readAsDataURL(file);
+    reader.onload = (e) => {
+      const img = new Image();
+      img.src = e.target.result;
+      img.onload = () => {
+        let width = img.width;
+        let height = img.height;
+
+        if (width > maxWidth) {
+          height = Math.round((height * maxWidth) / width);
+          width = maxWidth;
+        }
+
+        const canvas = document.createElement('canvas');
+        canvas.width = width;
+        canvas.height = height;
+
+        const ctx = canvas.getContext('2d');
+        ctx.drawImage(img, 0, 0, width, height);
+
+        const dataUrl = canvas.toDataURL('image/jpeg', quality);
+        resolve(dataUrl);
+      };
+      img.onerror = reject;
+    };
+    reader.onerror = reject;
+  });
 }
 
 function calcTotalHours() {
@@ -416,7 +632,6 @@ function calcTotalHours() {
     const wkA = getWeekData(semA);
     const wkB = getWeekData(semB);
 
-    // Si estamos editando una de ellas en este momento, tomar los valores del formulario
     let hrsA = appData.subSemanaEmpresa === 1 ? totalSemanaActual : getWeekTotalHours(wkA);
     let hrsB = appData.subSemanaEmpresa === 2 ? totalSemanaActual : getWeekTotalHours(wkB);
 
@@ -436,10 +651,14 @@ function syncToOfficialPrint() {
 
   const printSemanal = document.getElementById('print-view-semanal');
   const printEmpresa = document.getElementById('print-view-empresa');
+  const printSeminario = document.getElementById('print-view-seminario');
 
-  if (appData.modoFormato === 'semanal') {
+  const modo = appData.modoFormato;
+
+  if (modo === 'semanal') {
     if (printSemanal) printSemanal.style.display = 'block';
     if (printEmpresa) printEmpresa.style.display = 'none';
+    if (printSeminario) printSeminario.style.display = 'none';
 
     const wk = getWeekData(appData.semanaActual);
 
@@ -468,10 +687,10 @@ function syncToOfficialPrint() {
     document.getElementById('pr-ts-proceso').innerText = wk.tareaSignificativa?.proceso || 'No especificado.';
     document.getElementById('pr-ts-seguridad').innerText = wk.tareaSignificativa?.seguridad || 'No especificado.';
     document.getElementById('pr-ts-herramientas').innerText = wk.tareaSignificativa?.herramientas || 'No especificado.';
-  } else {
-    // IMPRESIÓN MODO EMPRESA (2 SEMANAS / FORMATO DUAL-05)
+  } else if (modo === 'empresa') {
     if (printSemanal) printSemanal.style.display = 'none';
     if (printEmpresa) printEmpresa.style.display = 'block';
+    if (printSeminario) printSeminario.style.display = 'none';
 
     const q = appData.quincenaActual;
     const { semA, semB } = getQuincenaWeeks(q);
@@ -536,6 +755,217 @@ function syncToOfficialPrint() {
     document.getElementById('pr-emp-eval-seguridad').innerText = empData.seguridadEmpresa || 'Cumple';
     document.getElementById('pr-emp-eval-calidad').innerText = empData.calidad || 'Excelente';
     document.getElementById('pr-emp-eval-obs').innerText = empData.observaciones || 'Desempeño conforme a los objetivos del perfil técnico.';
+  } else if (modo === 'seminario') {
+    // MODO SEMINARIO (4 ACTIVIDADES)
+    if (printSemanal) printSemanal.style.display = 'none';
+    if (printEmpresa) printEmpresa.style.display = 'none';
+    if (printSeminario) printSeminario.style.display = 'block';
+
+    const semData = appData.informeSeminario;
+
+    document.getElementById('pr-sem-estudiante').innerText = appData.estudiante || '-';
+    document.getElementById('pr-sem-matricula').innerText = appData.matricula || '-';
+    document.getElementById('pr-sem-semestre').innerText = appData.semestre || '-';
+    document.getElementById('pr-sem-carrera').innerText = appData.carrera || '-';
+    document.getElementById('pr-sem-instructor').innerText = appData.instructor || '-';
+    document.getElementById('pr-sem-empresa').innerText = appData.empresa || '-';
+
+    document.getElementById('pr-sem-ts-titulo').innerText = semData.tituloGlobal || 'Proyecto de Seminario de Prácticas';
+    document.getElementById('pr-sem-ts-proceso').innerText = semData.procesoGlobal || 'No especificado.';
+    document.getElementById('pr-sem-ts-seguridad').innerText = semData.seguridadGlobal || 'No especificado.';
+    document.getElementById('pr-sem-ts-herramientas').innerText = semData.herramientasGlobal || 'No especificado.';
+
+    // Renderizar las 4 actividades con sus evidencias
+    const container = document.getElementById('pr-sem-evidencias-container');
+    if (container) {
+      container.innerHTML = '';
+      for (let i = 1; i <= 4; i++) {
+        const act = getSeminarioActividad(i);
+        const itemDiv = document.createElement('div');
+        itemDiv.className = 'pr-actividad-item';
+
+        const urlText = act.urlUi || 'http://localhost:4200/';
+        const tagText = act.tagCodigo || `Actividad${i}.component.ts:`;
+
+        const uiHtml = act.imgUi
+          ? `<img src="${act.imgUi}" class="pr-evidence-img" alt="UI Actividad ${i}" />`
+          : `<div class="pr-no-img">Sin captura de interfaz web</div>`;
+
+        const codeHtml = act.imgCodigo
+          ? `<img src="${act.imgCodigo}" class="pr-evidence-img" alt="Código Actividad ${i}" />`
+          : `<div class="pr-no-img">Sin captura de código CodeSnap</div>`;
+
+        itemDiv.innerHTML = `
+          <div class="pr-act-header">Actividad N° ${i}: ${act.titulo || 'Sin título'}</div>
+          ${act.descripcion ? `<div class="pr-act-desc">${act.descripcion}</div>` : ''}
+          <div class="pr-evidence-subgrid">
+            <div class="pr-evidence-col">
+              <div class="pr-browser-bar">🌐 <span>${urlText}</span></div>
+              ${uiHtml}
+            </div>
+            <div class="pr-evidence-col">
+              <div class="pr-codesnap-bar">💻 <span>${tagText}</span></div>
+              ${codeHtml}
+            </div>
+          </div>
+        `;
+        container.appendChild(itemDiv);
+      }
+    }
+  }
+}
+
+function setupDropzoneEvents() {
+  // Dropzone UI
+  const dzUi = document.getElementById('dropzone-ui');
+  const fileUiInput = document.getElementById('file-ui-img');
+  const btnRemoveUi = document.getElementById('btn-remove-ui');
+  const btnViewUi = document.getElementById('btn-view-ui');
+
+  // Dropzone Código
+  const dzCod = document.getElementById('dropzone-codigo');
+  const fileCodInput = document.getElementById('file-codigo-img');
+  const btnRemoveCod = document.getElementById('btn-remove-codigo');
+  const btnViewCod = document.getElementById('btn-view-codigo');
+
+  // Modal
+  const modal = document.getElementById('img-fullscreen-modal');
+  const modalImg = document.getElementById('modal-full-img');
+  const modalCaption = document.getElementById('modal-img-caption');
+  const modalClose = document.getElementById('btn-close-modal');
+
+  const openModal = (src, caption) => {
+    if (!src || !modal) return;
+    modalImg.src = src;
+    modalCaption.innerText = caption || 'Vista previa';
+    modal.style.display = 'flex';
+  };
+
+  const closeModal = () => {
+    if (modal) modal.style.display = 'none';
+  };
+
+  if (modalClose) modalClose.onclick = closeModal;
+  if (modal) {
+    modal.onclick = (e) => {
+      if (e.target === modal) closeModal();
+    };
+  }
+
+  // Quick URLs
+  document.querySelectorAll('.btn-quick-url').forEach(btn => {
+    btn.onclick = () => {
+      const url = btn.getAttribute('data-url');
+      const urlInput = document.getElementById('sem-url-ui');
+      if (urlInput && url) {
+        urlInput.value = url;
+        readSeminarioActivityFormToState();
+      }
+    };
+  });
+
+  // UI Dropzone Logic
+  if (dzUi && fileUiInput) {
+    dzUi.addEventListener('dragover', (e) => {
+      e.preventDefault();
+      dzUi.classList.add('dragover');
+    });
+    dzUi.addEventListener('dragleave', () => dzUi.classList.remove('dragover'));
+    dzUi.addEventListener('drop', async (e) => {
+      e.preventDefault();
+      dzUi.classList.remove('dragover');
+      if (e.dataTransfer.files && e.dataTransfer.files[0]) {
+        await handleImageUpload(e.dataTransfer.files[0], 'ui');
+      }
+    });
+
+    fileUiInput.addEventListener('change', async (e) => {
+      if (e.target.files && e.target.files[0]) {
+        await handleImageUpload(e.target.files[0], 'ui');
+      }
+    });
+  }
+
+  // Code Dropzone Logic
+  if (dzCod && fileCodInput) {
+    dzCod.addEventListener('dragover', (e) => {
+      e.preventDefault();
+      dzCod.classList.add('dragover');
+    });
+    dzCod.addEventListener('dragleave', () => dzCod.classList.remove('dragover'));
+    dzCod.addEventListener('drop', async (e) => {
+      e.preventDefault();
+      dzCod.classList.remove('dragover');
+      if (e.dataTransfer.files && e.dataTransfer.files[0]) {
+        await handleImageUpload(e.dataTransfer.files[0], 'codigo');
+      }
+    });
+
+    fileCodInput.addEventListener('change', async (e) => {
+      if (e.target.files && e.target.files[0]) {
+        await handleImageUpload(e.target.files[0], 'codigo');
+      }
+    });
+  }
+
+  if (btnRemoveUi) {
+    btnRemoveUi.onclick = (e) => {
+      e.stopPropagation();
+      const semData = appData.informeSeminario;
+      const act = getSeminarioActividad(semData.actividadActual || 1);
+      act.imgUi = '';
+      renderSeminarioActivityUI();
+      showToast('Captura de interfaz eliminada');
+    };
+  }
+
+  if (btnViewUi) {
+    btnViewUi.onclick = (e) => {
+      e.stopPropagation();
+      const semData = appData.informeSeminario;
+      const act = getSeminarioActividad(semData.actividadActual || 1);
+      openModal(act.imgUi, `Interfaz Web - Actividad ${semData.actividadActual}: ${act.titulo}`);
+    };
+  }
+
+  if (btnRemoveCod) {
+    btnRemoveCod.onclick = (e) => {
+      e.stopPropagation();
+      const semData = appData.informeSeminario;
+      const act = getSeminarioActividad(semData.actividadActual || 1);
+      act.imgCodigo = '';
+      renderSeminarioActivityUI();
+      showToast('Captura de código eliminada');
+    };
+  }
+
+  if (btnViewCod) {
+    btnViewCod.onclick = (e) => {
+      e.stopPropagation();
+      const semData = appData.informeSeminario;
+      const act = getSeminarioActividad(semData.actividadActual || 1);
+      openModal(act.imgCodigo, `Código CodeSnap - Actividad ${semData.actividadActual}: ${act.titulo}`);
+    };
+  }
+}
+
+async function handleImageUpload(file, type) {
+  try {
+    const dataUrl = await compressAndConvertImage(file, 1200, 0.85);
+    const semData = appData.informeSeminario;
+    const act = getSeminarioActividad(semData.actividadActual || 1);
+
+    if (type === 'ui') {
+      act.imgUi = dataUrl;
+      showToast('¡Captura de Interfaz Web cargada!');
+    } else {
+      act.imgCodigo = dataUrl;
+      showToast('¡Captura de Código cargada!');
+    }
+    renderSeminarioActivityUI();
+  } catch (err) {
+    console.error('Error al procesar imagen:', err);
+    showToast('Error al procesar la imagen seleccionada');
   }
 }
 
@@ -547,9 +977,10 @@ function setupListeners() {
     window.print();
   };
 
-  // Switcher de Formato
+  // Switcher de Formato Trimodal
   document.getElementById('btn-fmt-semanal').onclick = () => setModoFormato('semanal');
   document.getElementById('btn-fmt-empresa').onclick = () => setModoFormato('empresa');
+  document.getElementById('btn-fmt-seminario').onclick = () => setModoFormato('seminario');
 
   // Switcher de Sub-semana en modo empresa
   document.getElementById('btn-subweek-a').onclick = () => {
@@ -563,6 +994,30 @@ function setupListeners() {
     appData.subSemanaEmpresa = 2;
     populateForm();
   };
+
+  // Botones de Actividad (Seminario 1 a 4)
+  for (let i = 1; i <= 4; i++) {
+    const btn = document.getElementById(`btn-act-${i}`);
+    if (btn) {
+      btn.onclick = () => {
+        readFormToCurrentState();
+        appData.informeSeminario.actividadActual = i;
+        renderSeminarioActivityUI();
+      };
+    }
+  }
+
+  // Escuchadores de inputs en Seminario
+  ['sem-act-titulo', 'sem-act-descripcion', 'sem-url-ui', 'sem-tag-codigo'].forEach(id => {
+    const el = document.getElementById(id);
+    if (el) {
+      el.addEventListener('input', () => {
+        readSeminarioActivityFormToState();
+      });
+    }
+  });
+
+  setupDropzoneEvents();
 
   // Dynamic Central Hub URL
   const hubBtn = document.getElementById('btn-central-hub');
@@ -596,4 +1051,3 @@ document.addEventListener('DOMContentLoaded', () => {
   setupListeners();
   hideSplashScreen();
 });
-
