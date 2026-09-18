@@ -120,7 +120,8 @@ export async function generateInformeSemanalPDF(appData) {
   }
 
   // ==========================================================
-  // RECOPILAR TODAS LAS CAPTURAS DE TODAS LAS ACTIVIDADES
+  // RECOPILAR TODAS LAS CAPTURAS ORGANIZADAS POR CATEGORÍA
+  // (USANDO SOLO EL NOMBRE PERSONALIZADO DEL USUARIO, SIN 'ACTIVIDAD X')
   // ==========================================================
   const webEvidencias = [];
   const codeEvidencias = [];
@@ -132,9 +133,8 @@ export async function generateInformeSemanalPDF(appData) {
 
       if (act.imgUi) {
         webEvidencias.push({
-          actNum: i,
           tipo: 'ui',
-          titulo: 'Actividad ' + i + ': ' + (act.urlUi || 'http://localhost:4200/'),
+          titulo: (act.urlUi && act.urlUi.trim()) ? act.urlUi.trim() : 'http://localhost:4200/',
           dataUrl: act.imgUi
         });
       }
@@ -143,9 +143,8 @@ export async function generateInformeSemanalPDF(appData) {
         act.extras.forEach(ex => {
           if (ex.tipo === 'ui' && ex.img) {
             webEvidencias.push({
-              actNum: i,
               tipo: 'ui',
-              titulo: 'Actividad ' + i + ' (Extra): ' + (ex.tag || 'http://localhost:4200/'),
+              titulo: (ex.tag && ex.tag.trim()) ? ex.tag.trim() : 'http://localhost:4200/',
               dataUrl: ex.img
             });
           }
@@ -154,9 +153,8 @@ export async function generateInformeSemanalPDF(appData) {
 
       if (act.imgCodigo) {
         codeEvidencias.push({
-          actNum: i,
           tipo: 'codigo',
-          titulo: 'Actividad ' + i + ': ' + (act.tagCodigo || ('Actividad' + i + '.ts')),
+          titulo: (act.tagCodigo && act.tagCodigo.trim()) ? act.tagCodigo.trim() : 'codigo.ts',
           dataUrl: act.imgCodigo
         });
       }
@@ -165,9 +163,8 @@ export async function generateInformeSemanalPDF(appData) {
         act.extras.forEach(ex => {
           if (ex.tipo === 'codigo' && ex.img) {
             codeEvidencias.push({
-              actNum: i,
               tipo: 'codigo',
-              titulo: 'Actividad ' + i + ' (Extra): ' + (ex.tag || 'codigo.ts'),
+              titulo: (ex.tag && ex.tag.trim()) ? ex.tag.trim() : 'codigo.ts',
               dataUrl: ex.img
             });
           }
@@ -177,7 +174,7 @@ export async function generateInformeSemanalPDF(appData) {
   }
 
   // ==========================================================
-  // PÁGINA 4: LAYOUT DINÁMICO Y FLUIDO (SIN COLISIONES)
+  // PÁGINA 4: TAREA, PROCESO Y CAPTURAS (WEB PRIMERO, CÓDIGO SEGUNDO)
   // ==========================================================
   const page4 = pages[3];
   let overflowWeb = [];
@@ -193,7 +190,7 @@ export async function generateInformeSemanalPDF(appData) {
       for (let i = 1; i <= 4; i++) {
         const a = semData.actividades && semData.actividades[i];
         if (a && a.descripcion && a.descripcion.trim()) {
-          actDescs.push('Actividad ' + i + ': ' + a.descripcion.trim());
+          actDescs.push(a.descripcion.trim());
         }
       }
       processDesc = actDescs.join('\n\n');
@@ -286,7 +283,7 @@ export async function generateInformeSemanalPDF(appData) {
 
     currentY -= (boxH + 18);
 
-    // 6. Sección Web:
+    // 6. CATEGORÍA WEB PRIMERO
     const remainingH = currentY - 30;
     const slotH = Math.min(Math.floor((remainingH - 60) / 2), 150);
 
@@ -355,7 +352,7 @@ export async function generateInformeSemanalPDF(appData) {
       currentY -= (maxDrawnH + 18);
     }
 
-    // 7. Sección Código:
+    // 7. CATEGORÍA CÓDIGO SEGUNDO
     page4.drawText('Código:', {
       x: 71,
       y: currentY,

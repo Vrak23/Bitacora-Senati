@@ -539,15 +539,24 @@ function renderSeminarioActivityUI() {
 }
 
 function renderExtraEvidencesList(act) {
-  const container = document.getElementById('extra-evidencias-list');
-  if (!container) return;
-  container.innerHTML = '';
+  const containerUi = document.getElementById('extra-ui-list');
+  const containerCod = document.getElementById('extra-codigo-list');
+  if (!containerUi && !containerCod) return;
+
+  if (containerUi) containerUi.innerHTML = '';
+  if (containerCod) containerCod.innerHTML = '';
 
   const extras = act.extras || [];
 
-  if (extras.length === 0) {
-    container.innerHTML = `<div style="grid-column: 1 / -1; text-align: center; color: var(--text-dim); font-size: 0.82rem; padding: 0.75rem; border: 1px dashed var(--border); border-radius: 8px;">No hay capturas adicionales agregadas a esta actividad. Usa los botones superiores para agregar capturas extra de UI o Código y reordenarlas manualmente con ⬆️ Subir / ⬇️ Bajar o arrastrándolas.</div>`;
-    return;
+  const uiExtras = extras.filter(ex => ex.tipo === 'ui');
+  const codExtras = extras.filter(ex => ex.tipo === 'codigo');
+
+  if (containerUi && uiExtras.length === 0) {
+    containerUi.innerHTML = `<div style="grid-column: 1 / -1; color: var(--text-dim); font-size: 0.8rem; padding: 0.6rem; border: 1px dashed var(--border); border-radius: 8px; text-align: center;">No hay capturas Web adicionales. Pulsa "+ Agregar Captura Web adicional" para añadir más.</div>`;
+  }
+
+  if (containerCod && codExtras.length === 0) {
+    containerCod.innerHTML = `<div style="grid-column: 1 / -1; color: var(--text-dim); font-size: 0.8rem; padding: 0.6rem; border: 1px dashed var(--border); border-radius: 8px; text-align: center;">No hay capturas de Código adicionales. Pulsa "+ Agregar Captura Código adicional" para añadir más.</div>`;
   }
 
   extras.forEach((ex, idx) => {
@@ -557,7 +566,7 @@ function renderExtraEvidencesList(act) {
     card.setAttribute('data-idx', idx);
 
     const isUi = ex.tipo === 'ui';
-    const titleText = isUi ? `🌐 Captura UI Extra #${idx + 1}` : `💻 Captura Código Extra #${idx + 1}`;
+    const titleText = isUi ? `Captura Web adicional #${idx + 1}` : `Captura Código adicional #${idx + 1}`;
     const placeholderText = isUi ? 'Ej: http://localhost:4200/clientes' : 'Ej: clientes.component.ts:';
 
     const imgHtml = ex.img
@@ -578,7 +587,7 @@ function renderExtraEvidencesList(act) {
       </div>
 
       <div class="form-group" style="margin-bottom: 0.5rem;">
-        <label style="font-size: 0.75rem;">${isUi ? 'URL de la captura:' : 'Etiqueta / Nombre de archivo:'}</label>
+        <label style="font-size: 0.75rem;">${isUi ? 'Nombre / URL de la captura:' : 'Nombre / Etiqueta de archivo:'}</label>
         <input type="text" class="form-control extra-tag-input" data-idx="${idx}" value="${ex.tag || ''}" placeholder="${placeholderText}" style="font-size: 0.8rem; padding: 0.25rem 0.5rem;" />
       </div>
 
@@ -599,7 +608,7 @@ function renderExtraEvidencesList(act) {
 
     card.addEventListener('dragend', () => {
       card.style.opacity = '1';
-      container.querySelectorAll('.extra-card-item').forEach(c => c.style.border = '');
+      document.querySelectorAll('.extra-card-item').forEach(c => c.style.border = '');
     });
 
     card.addEventListener('dragover', (e) => {
@@ -625,11 +634,15 @@ function renderExtraEvidencesList(act) {
       }
     });
 
-    container.appendChild(card);
+    if (isUi && containerUi) {
+      containerUi.appendChild(card);
+    } else if (!isUi && containerCod) {
+      containerCod.appendChild(card);
+    }
   });
 
   // Listeners para Mover Arriba / Mover Abajo
-  container.querySelectorAll('.btn-move-up').forEach(btn => {
+  document.querySelectorAll('.btn-move-up').forEach(btn => {
     btn.onclick = (e) => {
       e.stopPropagation();
       const idx = Number(btn.getAttribute('data-idx'));
@@ -643,7 +656,7 @@ function renderExtraEvidencesList(act) {
     };
   });
 
-  container.querySelectorAll('.btn-move-down').forEach(btn => {
+  document.querySelectorAll('.btn-move-down').forEach(btn => {
     btn.onclick = (e) => {
       e.stopPropagation();
       const idx = Number(btn.getAttribute('data-idx'));
@@ -658,7 +671,7 @@ function renderExtraEvidencesList(act) {
   });
 
   // Inputs y botones de eliminar/vista previa
-  container.querySelectorAll('.extra-tag-input').forEach(input => {
+  document.querySelectorAll('.extra-tag-input').forEach(input => {
     input.oninput = (e) => {
       const idx = Number(e.target.getAttribute('data-idx'));
       if (act.extras[idx]) {
@@ -667,7 +680,7 @@ function renderExtraEvidencesList(act) {
     };
   });
 
-  container.querySelectorAll('.extra-file-input').forEach(input => {
+  document.querySelectorAll('.extra-file-input').forEach(input => {
     input.onchange = async (e) => {
       const idx = Number(e.target.getAttribute('data-idx'));
       if (e.target.files && e.target.files[0] && act.extras[idx]) {
@@ -679,7 +692,7 @@ function renderExtraEvidencesList(act) {
     };
   });
 
-  container.querySelectorAll('.btn-remove-extra').forEach(btn => {
+  document.querySelectorAll('.btn-remove-extra').forEach(btn => {
     btn.onclick = () => {
       const idx = Number(btn.getAttribute('data-idx'));
       act.extras.splice(idx, 1);
@@ -688,7 +701,7 @@ function renderExtraEvidencesList(act) {
     };
   });
 
-  container.querySelectorAll('.btn-view-extra').forEach(btn => {
+  document.querySelectorAll('.btn-view-extra').forEach(btn => {
     btn.onclick = () => {
       const idx = Number(btn.getAttribute('data-idx'));
       const item = act.extras[idx];
