@@ -41,6 +41,9 @@
       <button id="btn-guardar" class="btn btn-light" title="Guardar cambios">
         <span class="btn-icon"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v11a2 2 0 0 1-2 2z"/><polyline points="17 21 17 13 7 13 7 21"/><polyline points="7 3 7 8 15 8"/></svg></span> <span class="btn-text">Guardar</span>
       </button>
+      <button id="btn-limpiar" class="btn btn-danger" title="Limpiar todo el contenido guardado">
+        <span class="btn-icon"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/><line x1="10" y1="11" x2="10" y2="17"/><line x1="14" y1="11" x2="14" y2="17"/></svg></span> <span class="btn-text">Limpiar</span>
+      </button>
       <button id="btn-imprimir" class="btn btn-accent" title="Imprimir / Guardar PDF">
         <span class="btn-icon"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="6 9 6 2 18 2 18 9"/><path d="M6 18H4a2 2 0 0 1-2-2v-5a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v5a2 2 0 0 1-2 2h-2"/><rect x="6" y="14" width="12" height="8"/></svg></span> <span class="btn-text">Imprimir / PDF</span>
       </button>
@@ -52,13 +55,13 @@
 
   <!-- CONTENEDOR PRINCIPAL -->
   <main class="container">
-    <!-- SELECTOR DE FORMATO (SEMANAL VS EMPRESA 2 SEMANAS) -->
+    <!-- SELECTOR DE FORMATO (INFORME SEMINARIO / EMPRESA / INFORME DE CLASE) -->
     <div class="format-switcher-container">
       <button id="btn-fmt-semanal" class="format-tab-btn active" type="button">
         <span class="tab-icon"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/></svg></span>
         <span class="tab-text">
-          <strong>Cuaderno Semanal</strong>
-          <small>Formato DUAL-04 (1 Semana)</small>
+          <strong>Informe Seminario</strong>
+          <small>Plan semanal y reporte de práctica</small>
         </span>
       </button>
       <button id="btn-fmt-empresa" class="format-tab-btn" type="button">
@@ -71,8 +74,8 @@
       <button id="btn-fmt-seminario" class="format-tab-btn" type="button">
         <span class="tab-icon"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/></svg></span>
         <span class="tab-text">
-          <strong>Informe Semanal</strong>
-          <small>Informe de Clase (Viernes) / Evidencias</small>
+          <strong>Informe de Clase</strong>
+          <small>Informe semanal de clase (Viernes) / Evidencias</small>
         </span>
       </button>
     </div>
@@ -287,36 +290,16 @@
       </div>
     </section>
 
-    <!-- SECCIÓN 4: EVIDENCIAS VISUALES DE LAS 4 ACTIVIDADES (MODO SEMINARIO) -->
+    <!-- SECCIÓN 4: EVIDENCIAS VISUALES (CAPTURAS WEB Y CÓDIGO) -->
     <section id="seminario-evidencias-card" class="card-section" style="display: none;">
       <div class="section-head">
-        <h2>4. Evidencias Visuales de las 4 Últimas Actividades</h2>
+        <h2>4. Evidencias Visuales (Capturas de Pantalla)</h2>
       </div>
       <p class="section-desc" style="color: var(--text-muted, #94a3b8); margin-bottom: 1rem; font-size: 0.9rem;">
-        Carga las capturas de pantalla de la <strong>Interfaz Web (UI)</strong> y del <strong>Código Fuente (CodeSnap)</strong> para cada una de las 4 actividades requeridas en tu informe de seminario SENATI.
+        Carga las capturas de la <strong>Interfaz Web (UI)</strong> y del <strong>Código Fuente (CodeSnap)</strong> con sus nombres o URLs correspondientes.
       </p>
 
-      <!-- BARRA DE ACTIVIDADES (1 a 4) -->
-      <div class="activity-pills-bar">
-        <span class="activity-bar-label">Seleccionar Actividad:</span>
-        <div class="activity-pills">
-          <button id="btn-act-1" class="act-pill active" type="button">Actividad 1</button>
-          <button id="btn-act-2" class="act-pill" type="button">Actividad 2</button>
-          <button id="btn-act-3" class="act-pill" type="button">Actividad 3</button>
-          <button id="btn-act-4" class="act-pill" type="button">Actividad 4</button>
-        </div>
-      </div>
-
       <div class="act-editor-box">
-        <div class="form-group" style="margin-bottom: 1rem;">
-          <label>Título / Denominación de la <span id="act-editing-num-label">Actividad 1</span>:</label>
-          <input type="text" id="sem-act-titulo" class="form-control" placeholder="Ej: Semana 1: Desarrollo del módulo de Login y Rutas SPA en Angular" />
-        </div>
-
-        <div class="form-group" style="margin-bottom: 1.25rem;">
-          <label>Descripción / Observaciones técnicas de la actividad:</label>
-          <textarea id="sem-act-descripcion" class="form-control" rows="4" placeholder="Explicación breve de la funcionalidad o módulo implementado en esta evidencia..."></textarea>
-        </div>
 
         <!-- CATEGORÍA 1: CAPTURAS DE INTERFAZ WEB (WEB) -->
         <div class="category-block" style="margin-top: 1.25rem; background: rgba(15, 23, 42, 0.4); border: 1px solid rgba(56, 189, 248, 0.25); border-radius: 12px; padding: 1.25rem;">

@@ -303,6 +303,20 @@ body {
   transform: translateY(-1px);
 }
 
+.btn-danger {
+  background: rgba(239, 68, 68, 0.15);
+  color: #fca5a5;
+  border: 1px solid rgba(239, 68, 68, 0.35);
+}
+
+.btn-danger:hover {
+  background: #ef4444;
+  color: #ffffff;
+  border-color: #ef4444;
+  box-shadow: 0 0 14px rgba(239, 68, 68, 0.4);
+  transform: translateY(-1px);
+}
+
 /* CONTAINER */
 .container {
   max-width: 1060px;
@@ -312,10 +326,10 @@ body {
   box-sizing: border-box;
 }
 
-/* FORMAT SWITCHER (SEMANAL VS EMPRESA) */
+/* FORMAT SWITCHER (INFORME SEMINARIO / EMPRESA / INFORME DE CLASE) */
 .format-switcher-container {
   display: grid;
-  grid-template-columns: 1fr 1fr;
+  grid-template-columns: repeat(3, 1fr);
   gap: 0.85rem;
   margin-bottom: 1.25rem;
 }
