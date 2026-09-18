@@ -293,11 +293,34 @@
     <!-- SECCIÓN 4: EVIDENCIAS VISUALES (CAPTURAS WEB Y CÓDIGO) -->
     <section id="seminario-evidencias-card" class="card-section" style="display: none;">
       <div class="section-head">
-        <h2>4. Evidencias Visuales (Capturas de Pantalla)</h2>
+        <h2 id="sec-4-title">4. Evidencias Visuales (Capturas de Pantalla)</h2>
       </div>
-      <p class="section-desc" style="color: var(--text-muted, #94a3b8); margin-bottom: 1rem; font-size: 0.9rem;">
+      <p id="sec-4-desc" class="section-desc" style="color: var(--text-muted, #94a3b8); margin-bottom: 1rem; font-size: 0.9rem;">
         Carga las capturas de la <strong>Interfaz Web (UI)</strong> y del <strong>Código Fuente (CodeSnap)</strong> con sus nombres o URLs correspondientes.
       </p>
+
+      <!-- BARRA DE ACTIVIDADES (1 a 4) PARA INFORME SEMINARIO -->
+      <div id="seminario-activity-pills-bar" class="activity-pills-bar" style="display: none; margin-bottom: 1.25rem;">
+        <span class="activity-bar-label">Actividades del Mes (Seminario):</span>
+        <div class="activity-pills">
+          <button id="btn-act-1" class="act-pill active" type="button">Actividad 1</button>
+          <button id="btn-act-2" class="act-pill" type="button">Actividad 2</button>
+          <button id="btn-act-3" class="act-pill" type="button">Actividad 3</button>
+          <button id="btn-act-4" class="act-pill" type="button">Actividad 4</button>
+        </div>
+      </div>
+
+      <!-- CAMPOS DE TÍTULO Y DESCRIPCIÓN DE LA ACTIVIDAD (SOLO MODO SEMINARIO) -->
+      <div id="seminario-act-meta-fields" style="display: none; margin-bottom: 1.25rem;">
+        <div class="form-group" style="margin-bottom: 1rem;">
+          <label>Título / Denominación de la <span id="act-editing-num-label">Actividad 1</span>:</label>
+          <input type="text" id="sem-act-titulo" class="form-control" placeholder="Ej: Semana 1: Desarrollo del módulo PetShop y enrutamiento SPA en Angular" />
+        </div>
+        <div class="form-group">
+          <label>Descripción / Observaciones técnicas de la actividad:</label>
+          <textarea id="sem-act-descripcion" class="form-control" rows="3" placeholder="Explicación técnica de la actividad realizada en esta evidencia..."></textarea>
+        </div>
+      </div>
 
       <div class="act-editor-box">
 

@@ -263,15 +263,23 @@ function updateFormatUI() {
 
   const btnLimpiarText = document.querySelector('#btn-limpiar .btn-text');
   const btnLimpiar = document.getElementById('btn-limpiar');
+  const actPillsBar = document.getElementById('seminario-activity-pills-bar');
+  const actMetaFields = document.getElementById('seminario-act-meta-fields');
+  const sec4Title = document.getElementById('sec-4-title');
+  const sec4Desc = document.getElementById('sec-4-desc');
 
   if (modo === 'semanal') {
-    // MODO INFORME SEMINARIO (Plan semanal + Tarea + Capturas + PDF Guía)
+    // MODO INFORME SEMINARIO (Plan semanal + Tarea + 4 Actividades con Capturas + PDF Guía)
     if (weeksBar) weeksBar.style.display = 'none';
     if (subweeksBar) subweeksBar.style.display = 'none';
     if (empresaEvalCard) empresaEvalCard.style.display = 'none';
     if (empresaMetaFields) empresaMetaFields.style.display = 'none';
     if (seminarioCard) seminarioCard.style.display = 'block';
     if (section2Plan) section2Plan.style.display = 'block';
+    if (actPillsBar) actPillsBar.style.display = 'flex';
+    if (actMetaFields) actMetaFields.style.display = 'block';
+    if (sec4Title) sec4Title.innerText = '4. Evidencias Visuales de las 4 Actividades del Mes';
+    if (sec4Desc) sec4Desc.innerText = 'Carga las capturas de la Interfaz Web (UI) y del Código Fuente (CodeSnap) para cada una de las 4 actividades del seminario.';
     if (templateBar) templateBar.style.display = 'none';
     if (extraTsFields) extraTsFields.style.display = 'none';
     if (sec1Title) sec1Title.innerText = '1. Datos del Estudiante (Informe Seminario)';
@@ -287,6 +295,8 @@ function updateFormatUI() {
     if (empresaMetaFields) empresaMetaFields.style.display = 'grid';
     if (seminarioCard) seminarioCard.style.display = 'none';
     if (section2Plan) section2Plan.style.display = 'block';
+    if (actPillsBar) actPillsBar.style.display = 'none';
+    if (actMetaFields) actMetaFields.style.display = 'none';
     if (templateBar) templateBar.style.display = 'flex';
     if (extraTsFields) extraTsFields.style.display = 'block';
     if (sec1Title) sec1Title.innerText = '1. Datos del Estudiante y Empresa Formadora (Dual)';
@@ -302,6 +312,10 @@ function updateFormatUI() {
     if (empresaMetaFields) empresaMetaFields.style.display = 'none';
     if (seminarioCard) seminarioCard.style.display = 'block';
     if (section2Plan) section2Plan.style.display = 'none';
+    if (actPillsBar) actPillsBar.style.display = 'none';
+    if (actMetaFields) actMetaFields.style.display = 'none';
+    if (sec4Title) sec4Title.innerText = '4. Evidencias Visuales (Capturas de la Clase)';
+    if (sec4Desc) sec4Desc.innerText = 'Carga las capturas de la Interfaz Web (UI) y del Código Fuente (CodeSnap) desarrolladas en la clase del viernes.';
     if (templateBar) templateBar.style.display = 'none';
     if (extraTsFields) extraTsFields.style.display = 'none';
     if (sec1Title) sec1Title.innerText = '1. Datos de Identificación (Informe de Clase)';
@@ -1263,26 +1277,10 @@ function setupListeners() {
     btnLimpiar.onclick = () => {
       const modo = appData.modoFormato;
       if (modo === 'semanal') {
-        if (confirm('¿Estás seguro de que deseas limpiar solo los datos de este Informe Seminario? (Plan semanal de días/horas, tarea significativa y capturas de seminario)')) {
+        if (confirm('¿Estás seguro de que deseas limpiar solo los datos de este Informe Seminario? (Plan semanal de días/horas, tarea significativa y las 4 actividades de seminario)')) {
           const currentSem = appData.semanaActual || 1;
           appData.semanas[currentSem] = getEmptyWeek(currentSem);
-
-          appData.informeSeminario = {
-            tituloGlobal: '',
-            procesoGlobal: '',
-            actividadActual: 1,
-            actividades: {
-              1: {
-                titulo: '',
-                descripcion: '',
-                urlUi: 'http://localhost:4200/',
-                imgUi: '',
-                imgCodigo: '',
-                tagCodigo: 'codigo.ts',
-                extras: []
-              }
-            }
-          };
+          appData.informeSeminario = getEmptySeminarioData();
 
           localStorage.setItem(STORAGE_KEY, JSON.stringify(appData));
           populateForm();
@@ -1376,8 +1374,20 @@ function setupListeners() {
     populateForm();
   };
 
+  // Botones de Actividad (Seminario 1 a 4)
+  for (let i = 1; i <= 4; i++) {
+    const btn = document.getElementById(`btn-act-${i}`);
+    if (btn) {
+      btn.onclick = () => {
+        readFormToCurrentState();
+        appData.informeSeminario.actividadActual = i;
+        renderSeminarioActivityUI();
+      };
+    }
+  }
+
   // Escuchadores de inputs
-  ['sem-url-ui', 'sem-tag-codigo'].forEach(id => {
+  ['sem-act-titulo', 'sem-act-descripcion', 'sem-url-ui', 'sem-tag-codigo'].forEach(id => {
     const el = document.getElementById(id);
     if (el) {
       el.addEventListener('input', () => {
