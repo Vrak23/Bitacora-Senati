@@ -567,13 +567,13 @@ function renderExtraEvidencesList(act) {
     card.innerHTML = `
       <div class="evidencia-head" style="display: flex; justify-content: space-between; align-items: center; gap: 0.5rem;">
         <div style="display: flex; align-items: center; gap: 0.4rem;">
-          <span style="cursor: grab; color: var(--text-muted); font-size: 0.9rem;" title="Arrastrar para reordenar">☰</span>
+          <span style="cursor: grab; color: var(--text-muted); display: inline-flex; align-items: center;" title="Arrastrar para reordenar"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="4" y1="8" x2="20" y2="8"/><line x1="4" y1="16" x2="20" y2="16"/></svg></span>
           <h3 style="font-size: 0.85rem; margin: 0;">${titleText}</h3>
         </div>
         <div class="card-reorder-actions" style="display: flex; gap: 0.35rem; align-items: center;">
-          <button type="button" class="btn-order-move btn-move-up" data-idx="${idx}" ${idx === 0 ? 'disabled style="opacity: 0.3; cursor: not-allowed;"' : ''} style="background: rgba(255,255,255,0.08); border: 1px solid var(--border); color: var(--primary); font-size: 0.75rem; padding: 0.2rem 0.5rem; border-radius: 4px; cursor: pointer;" title="Mover arriba">⬆️ Subir</button>
-          <button type="button" class="btn-order-move btn-move-down" data-idx="${idx}" ${idx === extras.length - 1 ? 'disabled style="opacity: 0.3; cursor: not-allowed;"' : ''} style="background: rgba(255,255,255,0.08); border: 1px solid var(--border); color: var(--primary); font-size: 0.75rem; padding: 0.2rem 0.5rem; border-radius: 4px; cursor: pointer;" title="Mover abajo">⬇️ Bajar</button>
-          <button type="button" class="btn-remove-extra" data-idx="${idx}" style="background: none; border: none; color: #ef4444; font-size: 0.8rem; cursor: pointer; margin-left: 0.2rem;" title="Eliminar captura">🗑️</button>
+          <button type="button" class="btn-order-move btn-move-up" data-idx="${idx}" ${idx === 0 ? 'disabled style="opacity: 0.3; cursor: not-allowed;"' : ''} style="background: rgba(255,255,255,0.08); border: 1px solid var(--border); color: var(--primary); font-size: 0.75rem; padding: 0.2rem 0.5rem; border-radius: 4px; cursor: pointer;" title="Mover arriba">Subir</button>
+          <button type="button" class="btn-order-move btn-move-down" data-idx="${idx}" ${idx === extras.length - 1 ? 'disabled style="opacity: 0.3; cursor: not-allowed;"' : ''} style="background: rgba(255,255,255,0.08); border: 1px solid var(--border); color: var(--primary); font-size: 0.75rem; padding: 0.2rem 0.5rem; border-radius: 4px; cursor: pointer;" title="Mover abajo">Bajar</button>
+          <button type="button" class="btn-remove-extra" data-idx="${idx}" style="background: none; border: none; color: #ef4444; font-size: 0.8rem; cursor: pointer; margin-left: 0.2rem;" title="Eliminar captura">Eliminar</button>
         </div>
       </div>
 
@@ -586,7 +586,7 @@ function renderExtraEvidencesList(act) {
         <input type="file" accept="image/*" class="file-hidden-input extra-file-input" data-idx="${idx}" />
         <div class="dropzone-preview" style="display: flex; flex-direction: column; align-items: center;">
           ${imgHtml}
-          ${ex.img ? `<button type="button" class="btn-preview-action view btn-view-extra" data-idx="${idx}" style="margin-top: 0.35rem; font-size: 0.7rem; padding: 0.2rem 0.5rem;">🔍 Ampliar</button>` : ''}
+          ${ex.img ? `<button type="button" class="btn-preview-action view btn-view-extra" data-idx="${idx}" style="margin-top: 0.35rem; font-size: 0.7rem; padding: 0.2rem 0.5rem;">Ampliar</button>` : ''}
         </div>
       </div>
     `;
@@ -621,7 +621,7 @@ function renderExtraEvidencesList(act) {
         const itemMoved = act.extras.splice(srcIdx, 1)[0];
         act.extras.splice(targetIdx, 0, itemMoved);
         renderSeminarioActivityUI();
-        showToast('Captura reordenada 🔄');
+        showToast('Captura reordenada');
       }
     });
 
@@ -1284,7 +1284,7 @@ function setupListeners() {
 
           localStorage.setItem(STORAGE_KEY, JSON.stringify(appData));
           populateForm();
-          showToast('¡Informe Seminario limpiado! 🗑️');
+          showToast('¡Informe Seminario limpiado!');
         }
       } else if (modo === 'seminario') {
         if (confirm('¿Estás seguro de que deseas limpiar solo los datos de este Informe de Clase? (Tarea del viernes y capturas de clase)')) {
@@ -1307,7 +1307,7 @@ function setupListeners() {
 
           localStorage.setItem(STORAGE_KEY, JSON.stringify(appData));
           populateForm();
-          showToast('¡Informe de Clase limpiado! 🗑️');
+          showToast('¡Informe de Clase limpiado!');
         }
       } else if (modo === 'empresa') {
         const q = appData.quincenaActual;
@@ -1320,7 +1320,7 @@ function setupListeners() {
 
           localStorage.setItem(STORAGE_KEY, JSON.stringify(appData));
           populateForm();
-          showToast(`¡Informe de Empresa (Quincena ${q}) limpiado! 🗑️`);
+          showToast(`¡Informe de Empresa (Quincena ${q}) limpiado!`);
         }
       }
     };
@@ -1332,7 +1332,7 @@ function setupListeners() {
       showToast('Generando Informe de Clase (PDF oficial exacto)...');
       try {
         await generateInformeSemanalPDF(appData);
-        showToast('¡Informe de Clase PDF generado exitosamente! 📄');
+        showToast('¡Informe de Clase PDF generado exitosamente!');
       } catch (err) {
         console.error('Error al generar PDF oficial:', err);
         showToast('Abriendo vista de impresión estándar...');
@@ -1343,7 +1343,7 @@ function setupListeners() {
       showToast('Generando Guía Simple de Seminario (PDF)...');
       try {
         await generateGuiaSimplePDF(appData);
-        showToast('¡Guía de Seminario PDF generada! 📄');
+        showToast('¡Guía de Seminario PDF generada!');
       } catch (err) {
         console.error('Error al generar PDF de guía:', err);
         showToast('Abriendo vista de impresión estándar...');
