@@ -2,7 +2,7 @@ import { PDFDocument, rgb, StandardFonts } from 'pdf-lib';
 
 function wrapText(text, font, fontSize, maxWidth) {
   if (!text) return [];
-  const paragraphs = text.split('\n');
+  const paragraphs = String(text).split('\n');
   const lines = [];
 
   for (const para of paragraphs) {
@@ -176,15 +176,32 @@ export async function generateInformeSemanalPDF(appData) {
   }
 
   // ==========================================================
-  // PÁGINA 4: TAREA, PROCESO Y CAPTURAS (WEB Y CÓDIGO)
+  // PÁGINA 4: TAREA Y DESCRIPCIÓN COMPLETA DEL PROCESO
   // ==========================================================
   const page4 = pages[3];
+  let overflowProcessLines = [];
+
   if (page4) {
     const act1 = (semData.actividades && semData.actividades[1]) || {};
     const taskTitle = semData.tituloGlobal || act1.titulo || 'Desarrollo de Aplicaciones Web y Soluciones Informáticas';
-    const processDesc = semData.procesoGlobal || act1.descripcion || 'Ejecución y desarrollo de las actividades técnicas programadas para la sesión práctica.';
+    
+    // Compilar la descripción completa del proceso
+    let processDesc = semData.procesoGlobal || '';
+    if (!processDesc.trim()) {
+      const actDescs = [];
+      for (let i = 1; i <= 4; i++) {
+        const a = semData.actividades && semData.actividades[i];
+        if (a && a.descripcion && a.descripcion.trim()) {
+          actDescs.push('Actividad ' + i + ': ' + a.descripcion.trim());
+        }
+      }
+      processDesc = actDescs.join('\n');
+    }
+    if (!processDesc.trim()) {
+      processDesc = 'Ejecución y desarrollo de las actividades técnicas programadas para la sesión práctica.';
+    }
 
-    // Tarea más significativa
+    // 1. Tarea más significativa (Línea superior)
     page4.drawRectangle({
       x: 71,
       y: 736,
@@ -206,13 +223,34 @@ export async function generateInformeSemanalPDF(appData) {
       color: rgb(0, 0, 0),
     });
 
-    // Descripción del proceso (2 líneas oficiales en la plantilla)
-    const procLines = wrapText(processDesc, helvetica, 9, 445);
-    if (procLines[0]) {
-      page4.drawText(procLines[0], { x: 75, y: 668.7, size: 9, font: helvetica, color: rgb(0, 0, 0) });
-    }
-    if (procLines[1]) {
-      page4.drawText(procLines[1], { x: 75, y: 649.7, size: 9, font: helvetica, color: rgb(0, 0, 0) });
+    // 2. Descripción completa del proceso (Espacio entre 700 y 595 pt)
+    const procFontSize = 8.5;
+    const procLineHeight = 11.5;
+    const procLines = wrapText(processDesc, helvetica, procFontSize, 450);
+
+    // Limpiar el área de líneas guía para que el texto largo se lea 100% nítido
+    page4.drawRectangle({
+      x: 71,
+      y: 596,
+      width: 454,
+      height: 98,
+      color: rgb(1, 1, 1),
+    });
+
+    // Dibujar hasta 8 líneas de descripción en la Página 4
+    const maxP4Lines = 8;
+    const p4LinesToDraw = procLines.slice(0, maxP4Lines);
+    overflowProcessLines = procLines.slice(maxP4Lines);
+
+    let startY = 684;
+    for (let lIdx = 0; lIdx < p4LinesToDraw.length; lIdx++) {
+      page4.drawText(p4LinesToDraw[lIdx], {
+        x: 73,
+        y: startY - (lIdx * procLineHeight),
+        size: procFontSize,
+        font: helvetica,
+        color: rgb(0, 0, 0),
+      });
     }
 
     // Dibujar Capturas WEB en Página 4 (área y: 275..490, x: 71..525)
@@ -329,75 +367,118 @@ export async function generateInformeSemanalPDF(appData) {
   }
 
   // ==========================================================
-  // PÁGINAS ADICIONALES DE CAPTURAS SI HAY MÁS DE 4
+  // PÁGINAS ADICIONALES (CONTINUACIÓN DE TEXTO O MÁS CAPTURAS)
   // ==========================================================
   const overflowWeb = webEvidencias.slice(2);
   const overflowCod = codeEvidencias.slice(2);
-  const remainingAll = [...overflowWeb, ...overflowCod];
+  const remainingImages = [...overflowWeb, ...overflowCod];
 
-  if (remainingAll.length > 0) {
-    const itemsPerPage = 4;
-    const numPages = Math.ceil(remainingAll.length / itemsPerPage);
+  // Si hay texto de proceso desbordado o imágenes restantes:
+  if (overflowProcessLines.length > 0 || remainingImages.length > 0) {
+    let currentRemainingImages = [...remainingImages];
+    let currentProcOverflow = [...overflowProcessLines];
 
-    for (let pIdx = 0; pIdx < numPages; pIdx++) {
-      const subItems = remainingAll.slice(pIdx * itemsPerPage, (pIdx + 1) * itemsPerPage);
-      // Insertar página de continuación antes de la página final de Observaciones
-      const contPage = pdfDoc.insertPage(4 + pIdx, [595.25, 842]);
+    let pageInsertIndex = 4;
 
-      // Encabezado de la página de continuación
-      contPage.drawRectangle({
-        x: 71,
-        y: 770,
-        width: 454,
-        height: 35,
-        borderColor: rgb(0, 0, 0),
-        borderWidth: 1,
-        color: rgb(0.96, 0.96, 0.96),
-      });
-      contPage.drawText('Esquema, dibujo, capturas (Continuación ' + (pIdx + 1) + ')', {
-        x: 180,
-        y: 782,
-        size: 13,
-        font: helveticaBold,
-        color: rgb(0, 0, 0),
-      });
+    while (currentProcOverflow.length > 0 || currentRemainingImages.length > 0) {
+      const contPage = pdfDoc.insertPage(pageInsertIndex, [595.25, 842]);
+      pageInsertIndex++;
 
-      // Grilla de 2x2 para las capturas de continuación
-      const gridX = 71;
-      const gridY = 50;
-      const gridW = 454;
-      const gridH = 700;
-      const cols = 2;
-      const rows = 2;
-      const cW = (gridW - 15) / cols;
-      const cH = (gridH - 25) / rows;
+      let availableTopY = 780;
 
-      for (let sIdx = 0; sIdx < subItems.length; sIdx++) {
-        const ev = subItems[sIdx];
-        const validDataUrl = await ensureJpegOrPngDataUrl(ev.dataUrl);
-        if (!validDataUrl) continue;
-        const isPng = validDataUrl.startsWith('data:image/png');
-        const img = isPng ? await pdfDoc.embedPng(validDataUrl) : await pdfDoc.embedJpg(validDataUrl);
-
-        const col = sIdx % 2;
-        const row = Math.floor(sIdx / 2); // 0 = sup, 1 = inf
-        const scale = Math.min(cW / img.width, (cH - 16) / img.height, 1);
-        const dw = img.width * scale;
-        const dh = img.height * scale;
-
-        const cx = gridX + col * (cW + 15);
-        const topY = gridY + gridH - (row + 1) * cH;
-        const dx = cx + (cW - dw) / 2;
-        const dy = topY + (cH - dh) / 2;
-
-        contPage.drawImage(img, { x: dx, y: dy, width: dw, height: dh });
-        contPage.drawText(ev.titulo.substring(0, 42), {
-          x: cx,
-          y: dy + dh + 2,
-          size: 7,
-          font: helveticaBold,
-          color: rgb(0.1, 0.2, 0.4),
+      // Si hay texto de proceso pendiente, dibujarlo arriba
+      if (currentProcOverflow.length > 0) {
+        contPage.drawRectangle({
+          x: 71,
+          y: availableTopY - 10,
+          width: 454,
+          height: 25,
+          color: rgb(0.95, 0.95, 0.95),
         });
+        contPage.drawText('Descripción del Proceso (Continuación):', {
+          x: 75,
+          y: availableTopY - 2,
+          size: 10,
+          font: helveticaBold,
+          color: rgb(0, 0, 0),
+        });
+        availableTopY -= 30;
+
+        const maxLinesThisPage = currentRemainingImages.length > 0 ? 12 : 55;
+        const linesToDraw = currentProcOverflow.slice(0, maxLinesThisPage);
+        currentProcOverflow = currentProcOverflow.slice(maxLinesThisPage);
+
+        for (let i = 0; i < linesToDraw.length; i++) {
+          contPage.drawText(linesToDraw[i], {
+            x: 75,
+            y: availableTopY - (i * 12),
+            size: 8.5,
+            font: helvetica,
+            color: rgb(0, 0, 0),
+          });
+        }
+        availableTopY -= (linesToDraw.length * 12 + 20);
+      }
+
+      // Si hay imágenes por colocar en esta página
+      if (currentRemainingImages.length > 0 && availableTopY > 200) {
+        contPage.drawRectangle({
+          x: 71,
+          y: availableTopY - 5,
+          width: 454,
+          height: 22,
+          borderColor: rgb(0, 0, 0),
+          borderWidth: 0.75,
+          color: rgb(0.96, 0.96, 0.96),
+        });
+        contPage.drawText('Esquema, dibujo, capturas (Continuación)', {
+          x: 180,
+          y: availableTopY + 2,
+          size: 11,
+          font: helveticaBold,
+          color: rgb(0, 0, 0),
+        });
+        availableTopY -= 25;
+
+        const imagesForThisPage = currentRemainingImages.slice(0, 4);
+        currentRemainingImages = currentRemainingImages.slice(4);
+
+        const gridX = 71;
+        const gridY = 40;
+        const gridW = 454;
+        const gridH = availableTopY - gridY;
+        const cols = 2;
+        const rows = Math.min(2, Math.ceil(imagesForThisPage.length / 2));
+        const cW = (gridW - 15) / cols;
+        const cH = (gridH - 15) / rows;
+
+        for (let sIdx = 0; sIdx < imagesForThisPage.length; sIdx++) {
+          const ev = imagesForThisPage[sIdx];
+          const validDataUrl = await ensureJpegOrPngDataUrl(ev.dataUrl);
+          if (!validDataUrl) continue;
+          const isPng = validDataUrl.startsWith('data:image/png');
+          const img = isPng ? await pdfDoc.embedPng(validDataUrl) : await pdfDoc.embedJpg(validDataUrl);
+
+          const col = sIdx % 2;
+          const row = Math.floor(sIdx / 2);
+          const scale = Math.min(cW / img.width, (cH - 16) / img.height, 1);
+          const dw = img.width * scale;
+          const dh = img.height * scale;
+
+          const cx = gridX + col * (cW + 15);
+          const topY = gridY + gridH - (row + 1) * cH;
+          const dx = cx + (cW - dw) / 2;
+          const dy = topY + (cH - dh) / 2;
+
+          contPage.drawImage(img, { x: dx, y: dy, width: dw, height: dh });
+          contPage.drawText(ev.titulo.substring(0, 42), {
+            x: cx,
+            y: dy + dh + 2,
+            size: 7,
+            font: helveticaBold,
+            color: rgb(0.1, 0.2, 0.4),
+          });
+        }
       }
     }
   }
