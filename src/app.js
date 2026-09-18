@@ -261,6 +261,9 @@ function updateFormatUI() {
   btnEmpresa?.classList.toggle('active', modo === 'empresa');
   btnSeminario?.classList.toggle('active', modo === 'seminario');
 
+  const btnLimpiarText = document.querySelector('#btn-limpiar .btn-text');
+  const btnLimpiar = document.getElementById('btn-limpiar');
+
   if (modo === 'semanal') {
     // MODO INFORME SEMINARIO (Plan semanal + Tarea + Capturas + PDF Guía)
     if (weeksBar) weeksBar.style.display = 'none';
@@ -274,6 +277,8 @@ function updateFormatUI() {
     if (sec1Title) sec1Title.innerText = '1. Datos del Estudiante (Informe Seminario)';
     if (sec3Title) sec3Title.innerText = '3. Tarea Más Significativa del Seminario';
     if (tsLabelTitulo) tsLabelTitulo.innerText = 'Denominación de la Tarea / Proyecto:';
+    if (btnLimpiarText) btnLimpiarText.innerText = 'Limpiar Seminario';
+    if (btnLimpiar) btnLimpiar.title = 'Limpiar solo los datos de este Informe Seminario';
   } else if (modo === 'empresa') {
     // MODO EMPRESA (Quincenal 2 Semanas)
     if (weeksBar) weeksBar.style.display = 'flex';
@@ -287,6 +292,8 @@ function updateFormatUI() {
     if (sec1Title) sec1Title.innerText = '1. Datos del Estudiante y Empresa Formadora (Dual)';
     if (sec3Title) sec3Title.innerText = '3. Tarea / Proyecto Principal de la Quincena';
     if (tsLabelTitulo) tsLabelTitulo.innerText = 'Denominación del Proyecto en Empresa:';
+    if (btnLimpiarText) btnLimpiarText.innerText = 'Limpiar Empresa';
+    if (btnLimpiar) btnLimpiar.title = 'Limpiar solo los datos de esta Quincena de Empresa';
   } else if (modo === 'seminario') {
     // MODO INFORME DE CLASE (Viernes / Tarea + Capturas + PDF Oficial SENATI)
     if (weeksBar) weeksBar.style.display = 'none';
@@ -300,6 +307,8 @@ function updateFormatUI() {
     if (sec1Title) sec1Title.innerText = '1. Datos de Identificación (Informe de Clase)';
     if (sec3Title) sec3Title.innerText = '2. Tarea Más Significativa de la Clase';
     if (tsLabelTitulo) tsLabelTitulo.innerText = 'Denominación de la Tarea / Proyecto:';
+    if (btnLimpiarText) btnLimpiarText.innerText = 'Limpiar Clase';
+    if (btnLimpiar) btnLimpiar.title = 'Limpiar solo los datos de este Informe de Clase';
   }
 }
 
@@ -1252,13 +1261,69 @@ function setupListeners() {
   const btnLimpiar = document.getElementById('btn-limpiar');
   if (btnLimpiar) {
     btnLimpiar.onclick = () => {
-      if (confirm('¿Estás seguro de que deseas limpiar todo el contenido guardado? Se restablecerán todos los campos a sus valores iniciales.')) {
-        localStorage.removeItem(STORAGE_KEY);
-        appData = JSON.parse(JSON.stringify(DEFAULT_DATA));
-        updateFormatUI();
-        renderWeeksBar();
-        populateForm();
-        showToast('¡Contenido limpiado correctamente! 🗑️');
+      const modo = appData.modoFormato;
+      if (modo === 'semanal') {
+        if (confirm('¿Estás seguro de que deseas limpiar solo los datos de este Informe Seminario? (Plan semanal de días/horas, tarea significativa y capturas de seminario)')) {
+          const currentSem = appData.semanaActual || 1;
+          appData.semanas[currentSem] = getEmptyWeek(currentSem);
+
+          appData.informeSeminario = {
+            tituloGlobal: '',
+            procesoGlobal: '',
+            actividadActual: 1,
+            actividades: {
+              1: {
+                titulo: '',
+                descripcion: '',
+                urlUi: 'http://localhost:4200/',
+                imgUi: '',
+                imgCodigo: '',
+                tagCodigo: 'codigo.ts',
+                extras: []
+              }
+            }
+          };
+
+          localStorage.setItem(STORAGE_KEY, JSON.stringify(appData));
+          populateForm();
+          showToast('¡Informe Seminario limpiado! 🗑️');
+        }
+      } else if (modo === 'seminario') {
+        if (confirm('¿Estás seguro de que deseas limpiar solo los datos de este Informe de Clase? (Tarea del viernes y capturas de clase)')) {
+          appData.informeSeminario = {
+            tituloGlobal: '',
+            procesoGlobal: '',
+            actividadActual: 1,
+            actividades: {
+              1: {
+                titulo: '',
+                descripcion: '',
+                urlUi: 'http://localhost:4200/',
+                imgUi: '',
+                imgCodigo: '',
+                tagCodigo: 'codigo.ts',
+                extras: []
+              }
+            }
+          };
+
+          localStorage.setItem(STORAGE_KEY, JSON.stringify(appData));
+          populateForm();
+          showToast('¡Informe de Clase limpiado! 🗑️');
+        }
+      } else if (modo === 'empresa') {
+        const q = appData.quincenaActual;
+        const { semA, semB } = getQuincenaWeeks(q);
+        if (confirm(`¿Estás seguro de que deseas limpiar solo los datos de la Quincena N° ${q} (Semanas ${semA} y ${semB}) de Empresa?`)) {
+          if (!appData.informesEmpresa) appData.informesEmpresa = {};
+          appData.informesEmpresa[q] = getEmptyEmpresaReport(q);
+          appData.semanas[semA] = getEmptyWeek(semA);
+          appData.semanas[semB] = getEmptyWeek(semB);
+
+          localStorage.setItem(STORAGE_KEY, JSON.stringify(appData));
+          populateForm();
+          showToast(`¡Informe de Empresa (Quincena ${q}) limpiado! 🗑️`);
+        }
       }
     };
   }
