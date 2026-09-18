@@ -64,11 +64,18 @@ export async function generateInformeSemanalPDF(appData) {
   const helvetica = await pdfDoc.embedFont(StandardFonts.Helvetica);
   const helveticaBold = await pdfDoc.embedFont(StandardFonts.HelveticaBold);
 
+  // Eliminar página 6 si viene vacía en la plantilla
+  if (pdfDoc.getPageCount() >= 6) {
+    pdfDoc.removePage(pdfDoc.getPageCount() - 1);
+  }
+
   const pages = pdfDoc.getPages();
   const semData = appData.informeSeminario || {};
   const wk = (appData.semanas && appData.semanas[appData.semanaActual]) || {};
 
+  // ==========================================================
   // PÁGINA 2: HOJA DE IDENTIFICACIÓN
+  // ==========================================================
   const page2 = pages[1];
   if (page2) {
     const clearAndDraw = (text, x, y, size = 10.5, clearW = 300) => {
@@ -111,13 +118,73 @@ export async function generateInformeSemanalPDF(appData) {
     }
   }
 
-  // PÁGINA 4: TAREA MÁS SIGNIFICATIVA Y DESCRIPCIÓN DEL PROCESO
+  // ==========================================================
+  // RECOPILAR TODAS LAS CAPTURAS (SIN LÍMITE DE 4)
+  // ==========================================================
+  const webEvidencias = [];
+  const codeEvidencias = [];
+
+  if (semData.actividades) {
+    for (let i = 1; i <= 4; i++) {
+      const act = semData.actividades[i];
+      if (!act) continue;
+
+      if (act.imgUi) {
+        webEvidencias.push({
+          actNum: i,
+          tipo: 'ui',
+          titulo: 'Actividad ' + i + ': ' + (act.urlUi || 'http://localhost:4200/'),
+          dataUrl: act.imgUi
+        });
+      }
+
+      if (act.extras && act.extras.length > 0) {
+        act.extras.forEach(ex => {
+          if (ex.tipo === 'ui' && ex.img) {
+            webEvidencias.push({
+              actNum: i,
+              tipo: 'ui',
+              titulo: 'Actividad ' + i + ' (Extra): ' + (ex.tag || 'http://localhost:4200/'),
+              dataUrl: ex.img
+            });
+          }
+        });
+      }
+
+      if (act.imgCodigo) {
+        codeEvidencias.push({
+          actNum: i,
+          tipo: 'codigo',
+          titulo: 'Actividad ' + i + ': ' + (act.tagCodigo || ('Actividad' + i + '.ts')),
+          dataUrl: act.imgCodigo
+        });
+      }
+
+      if (act.extras && act.extras.length > 0) {
+        act.extras.forEach(ex => {
+          if (ex.tipo === 'codigo' && ex.img) {
+            codeEvidencias.push({
+              actNum: i,
+              tipo: 'codigo',
+              titulo: 'Actividad ' + i + ' (Extra): ' + (ex.tag || 'codigo.ts'),
+              dataUrl: ex.img
+            });
+          }
+        });
+      }
+    }
+  }
+
+  // ==========================================================
+  // PÁGINA 4: TAREA, PROCESO Y CAPTURAS (WEB Y CÓDIGO)
+  // ==========================================================
   const page4 = pages[3];
   if (page4) {
     const act1 = (semData.actividades && semData.actividades[1]) || {};
     const taskTitle = semData.tituloGlobal || act1.titulo || 'Desarrollo de Aplicaciones Web y Soluciones Informáticas';
     const processDesc = semData.procesoGlobal || act1.descripcion || 'Ejecución y desarrollo de las actividades técnicas programadas para la sesión práctica.';
 
+    // Tarea más significativa
     page4.drawRectangle({
       x: 71,
       y: 736,
@@ -139,166 +206,217 @@ export async function generateInformeSemanalPDF(appData) {
       color: rgb(0, 0, 0),
     });
 
-    const ruledLinesY = [
-      684.7, 665.7, 646.7, 627.7, 608.7, 589.7, 570.7, 551.9,
-      532.9, 513.9, 494.9, 475.9, 456.9, 437.9, 418.9, 399.9,
-      381.1, 362.1, 343.1, 324.1, 305.1, 286.1, 267.1, 248.1,
-      229.1, 210.1, 191.3, 172.3, 153.3, 134.3
-    ];
+    // Descripción del proceso (2 líneas oficiales en la plantilla)
+    const procLines = wrapText(processDesc, helvetica, 9, 445);
+    if (procLines[0]) {
+      page4.drawText(procLines[0], { x: 75, y: 668.7, size: 9, font: helvetica, color: rgb(0, 0, 0) });
+    }
+    if (procLines[1]) {
+      page4.drawText(procLines[1], { x: 75, y: 649.7, size: 9, font: helvetica, color: rgb(0, 0, 0) });
+    }
 
-    const wrappedProcess = wrapText(processDesc, helvetica, 9, 445);
-    for (let i = 0; i < ruledLinesY.length; i++) {
-      const lineText = wrappedProcess[i];
-      if (lineText) {
-        page4.drawText(lineText, {
-          x: 75,
-          y: ruledLinesY[i] + 3,
-          size: 9,
-          font: helvetica,
-          color: rgb(0, 0, 0),
+    // Dibujar Capturas WEB en Página 4 (área y: 275..490, x: 71..525)
+    const webAreaY = 275;
+    const webAreaH = 215;
+    const webAreaW = 454;
+    const webOnP4 = webEvidencias.slice(0, 2);
+
+    if (webOnP4.length === 1) {
+      const ev = webOnP4[0];
+      const validDataUrl = await ensureJpegOrPngDataUrl(ev.dataUrl);
+      if (validDataUrl) {
+        const isPng = validDataUrl.startsWith('data:image/png');
+        const img = isPng ? await pdfDoc.embedPng(validDataUrl) : await pdfDoc.embedJpg(validDataUrl);
+        const maxW = webAreaW;
+        const maxH = webAreaH - 15;
+        const scale = Math.min(maxW / img.width, maxH / img.height, 1);
+        const dw = img.width * scale;
+        const dh = img.height * scale;
+        const dx = 71 + (webAreaW - dw) / 2;
+        const dy = webAreaY + (webAreaH - dh) / 2;
+
+        page4.drawImage(img, { x: dx, y: dy, width: dw, height: dh });
+        page4.drawText(ev.titulo.substring(0, 60), {
+          x: dx,
+          y: dy + dh + 3,
+          size: 7.5,
+          font: helveticaBold,
+          color: rgb(0.1, 0.2, 0.4),
+        });
+      }
+    } else if (webOnP4.length === 2) {
+      const cellW = (webAreaW - 15) / 2;
+      const cellH = webAreaH;
+      for (let idx = 0; idx < 2; idx++) {
+        const ev = webOnP4[idx];
+        const validDataUrl = await ensureJpegOrPngDataUrl(ev.dataUrl);
+        if (!validDataUrl) continue;
+        const isPng = validDataUrl.startsWith('data:image/png');
+        const img = isPng ? await pdfDoc.embedPng(validDataUrl) : await pdfDoc.embedJpg(validDataUrl);
+        const scale = Math.min(cellW / img.width, (cellH - 15) / img.height, 1);
+        const dw = img.width * scale;
+        const dh = img.height * scale;
+        const cx = 71 + idx * (cellW + 15);
+        const dx = cx + (cellW - dw) / 2;
+        const dy = webAreaY + (cellH - dh) / 2;
+
+        page4.drawImage(img, { x: dx, y: dy, width: dw, height: dh });
+        page4.drawText(ev.titulo.substring(0, 42), {
+          x: cx,
+          y: dy + dh + 2,
+          size: 7,
+          font: helveticaBold,
+          color: rgb(0.1, 0.2, 0.4),
+        });
+      }
+    }
+
+    // Dibujar Capturas CÓDIGO en Página 4 (área y: 25..235, x: 71..525)
+    const codAreaY = 25;
+    const codAreaH = 210;
+    const codAreaW = 454;
+    const codOnP4 = codeEvidencias.slice(0, 2);
+
+    if (codOnP4.length === 1) {
+      const ev = codOnP4[0];
+      const validDataUrl = await ensureJpegOrPngDataUrl(ev.dataUrl);
+      if (validDataUrl) {
+        const isPng = validDataUrl.startsWith('data:image/png');
+        const img = isPng ? await pdfDoc.embedPng(validDataUrl) : await pdfDoc.embedJpg(validDataUrl);
+        const maxW = codAreaW;
+        const maxH = codAreaH - 15;
+        const scale = Math.min(maxW / img.width, maxH / img.height, 1);
+        const dw = img.width * scale;
+        const dh = img.height * scale;
+        const dx = 71 + (codAreaW - dw) / 2;
+        const dy = codAreaY + (codAreaH - dh) / 2;
+
+        page4.drawImage(img, { x: dx, y: dy, width: dw, height: dh });
+        page4.drawText(ev.titulo.substring(0, 60), {
+          x: dx,
+          y: dy + dh + 3,
+          size: 7.5,
+          font: helveticaBold,
+          color: rgb(0.1, 0.2, 0.4),
+        });
+      }
+    } else if (codOnP4.length === 2) {
+      const cellW = (codAreaW - 15) / 2;
+      const cellH = codAreaH;
+      for (let idx = 0; idx < 2; idx++) {
+        const ev = codOnP4[idx];
+        const validDataUrl = await ensureJpegOrPngDataUrl(ev.dataUrl);
+        if (!validDataUrl) continue;
+        const isPng = validDataUrl.startsWith('data:image/png');
+        const img = isPng ? await pdfDoc.embedPng(validDataUrl) : await pdfDoc.embedJpg(validDataUrl);
+        const scale = Math.min(cellW / img.width, (cellH - 15) / img.height, 1);
+        const dw = img.width * scale;
+        const dh = img.height * scale;
+        const cx = 71 + idx * (cellW + 15);
+        const dx = cx + (cellW - dw) / 2;
+        const dy = codAreaY + (cellH - dh) / 2;
+
+        page4.drawImage(img, { x: dx, y: dy, width: dw, height: dh });
+        page4.drawText(ev.titulo.substring(0, 42), {
+          x: cx,
+          y: dy + dh + 2,
+          size: 7,
+          font: helveticaBold,
+          color: rgb(0.1, 0.2, 0.4),
         });
       }
     }
   }
 
-  // PÁGINA 5: ESQUEMA / DIAGRAMA + ASISTENCIA VIERNES + OBSERVACIONES
-  const page5 = pages[4];
-  if (page5) {
-    const evidencias = [];
-    if (semData.actividades) {
-      for (let i = 1; i <= 4; i++) {
-        const act = semData.actividades[i];
-        if (!act) continue;
+  // ==========================================================
+  // PÁGINAS ADICIONALES DE CAPTURAS SI HAY MÁS DE 4
+  // ==========================================================
+  const overflowWeb = webEvidencias.slice(2);
+  const overflowCod = codeEvidencias.slice(2);
+  const remainingAll = [...overflowWeb, ...overflowCod];
 
-        if (act.imgUi) {
-          evidencias.push({
-            tipo: 'UI',
-            titulo: 'Act. ' + i + ' UI: ' + (act.urlUi || 'http://localhost:4200/'),
-            dataUrl: act.imgUi
-          });
-        }
-        if (act.imgCodigo) {
-          evidencias.push({
-            tipo: 'Código',
-            titulo: 'Act. ' + i + ' Código: ' + (act.tagCodigo || ('Actividad' + i + '.ts')),
-            dataUrl: act.imgCodigo
-          });
-        }
-        if (act.extras && act.extras.length > 0) {
-          act.extras.forEach(ex => {
-            if (ex.img) {
-              evidencias.push({
-                tipo: ex.tipo === 'ui' ? 'UI' : 'Código',
-                titulo: 'Act. ' + i + ' ' + (ex.tipo === 'ui' ? 'UI' : 'Código') + ': ' + (ex.tag || ''),
-                dataUrl: ex.img
-              });
-            }
-          });
-        }
-      }
-    }
+  if (remainingAll.length > 0) {
+    const itemsPerPage = 4;
+    const numPages = Math.ceil(remainingAll.length / itemsPerPage);
 
-    const boxX = 49.8;
-    const boxY = 385;
-    const boxW = 510;
-    const boxH = 340;
+    for (let pIdx = 0; pIdx < numPages; pIdx++) {
+      const subItems = remainingAll.slice(pIdx * itemsPerPage, (pIdx + 1) * itemsPerPage);
+      // Insertar página de continuación antes de la página final de Observaciones
+      const contPage = pdfDoc.insertPage(4 + pIdx, [595.25, 842]);
 
-    if (evidencias.length > 0) {
-      const count = evidencias.length;
+      // Encabezado de la página de continuación
+      contPage.drawRectangle({
+        x: 71,
+        y: 770,
+        width: 454,
+        height: 35,
+        borderColor: rgb(0, 0, 0),
+        borderWidth: 1,
+        color: rgb(0.96, 0.96, 0.96),
+      });
+      contPage.drawText('Esquema, dibujo, capturas (Continuación ' + (pIdx + 1) + ')', {
+        x: 180,
+        y: 782,
+        size: 13,
+        font: helveticaBold,
+        color: rgb(0, 0, 0),
+      });
 
-      if (count === 1) {
-        const ev = evidencias[0];
+      // Grilla de 2x2 para las capturas de continuación
+      const gridX = 71;
+      const gridY = 50;
+      const gridW = 454;
+      const gridH = 700;
+      const cols = 2;
+      const rows = 2;
+      const cW = (gridW - 15) / cols;
+      const cH = (gridH - 25) / rows;
+
+      for (let sIdx = 0; sIdx < subItems.length; sIdx++) {
+        const ev = subItems[sIdx];
         const validDataUrl = await ensureJpegOrPngDataUrl(ev.dataUrl);
-        if (validDataUrl) {
-          const isPng = validDataUrl.startsWith('data:image/png');
-          const embeddedImg = isPng ? await pdfDoc.embedPng(validDataUrl) : await pdfDoc.embedJpg(validDataUrl);
-          const maxW = boxW - 20;
-          const maxH = boxH - 30;
-          const scale = Math.min(maxW / embeddedImg.width, maxH / embeddedImg.height, 1);
-          const dw = embeddedImg.width * scale;
-          const dh = embeddedImg.height * scale;
-          const dx = boxX + (boxW - dw) / 2;
-          const dy = boxY + (boxH - dh) / 2;
+        if (!validDataUrl) continue;
+        const isPng = validDataUrl.startsWith('data:image/png');
+        const img = isPng ? await pdfDoc.embedPng(validDataUrl) : await pdfDoc.embedJpg(validDataUrl);
 
-          page5.drawImage(embeddedImg, { x: dx, y: dy, width: dw, height: dh });
-          page5.drawText(ev.titulo, {
-            x: dx,
-            y: dy + dh + 4,
-            size: 8,
-            font: helveticaBold,
-            color: rgb(0.1, 0.2, 0.4),
-          });
-        }
-      } else if (count === 2) {
-        const cellW = (boxW - 30) / 2;
-        const cellH = boxH - 30;
-        for (let idx = 0; idx < 2; idx++) {
-          const ev = evidencias[idx];
-          const validDataUrl = await ensureJpegOrPngDataUrl(ev.dataUrl);
-          if (!validDataUrl) continue;
-          const isPng = validDataUrl.startsWith('data:image/png');
-          const embeddedImg = isPng ? await pdfDoc.embedPng(validDataUrl) : await pdfDoc.embedJpg(validDataUrl);
-          const scale = Math.min(cellW / embeddedImg.width, (cellH - 15) / embeddedImg.height, 1);
-          const dw = embeddedImg.width * scale;
-          const dh = embeddedImg.height * scale;
-          const cx = boxX + 10 + idx * (cellW + 10);
-          const dx = cx + (cellW - dw) / 2;
-          const dy = boxY + 10 + (cellH - dh) / 2;
+        const col = sIdx % 2;
+        const row = Math.floor(sIdx / 2); // 0 = sup, 1 = inf
+        const scale = Math.min(cW / img.width, (cH - 16) / img.height, 1);
+        const dw = img.width * scale;
+        const dh = img.height * scale;
 
-          page5.drawImage(embeddedImg, { x: dx, y: dy, width: dw, height: dh });
-          page5.drawText(ev.titulo.substring(0, 45), {
-            x: cx,
-            y: dy + dh + 3,
-            size: 7,
-            font: helveticaBold,
-            color: rgb(0.1, 0.2, 0.4),
-          });
-        }
-      } else {
-        const cols = 2;
-        const rows = Math.min(2, Math.ceil(count / 2));
-        const cellW = (boxW - 30) / cols;
-        const cellH = (boxH - 30) / rows;
+        const cx = gridX + col * (cW + 15);
+        const topY = gridY + gridH - (row + 1) * cH;
+        const dx = cx + (cW - dw) / 2;
+        const dy = topY + (cH - dh) / 2;
 
-        for (let idx = 0; idx < Math.min(4, count); idx++) {
-          const ev = evidencias[idx];
-          const validDataUrl = await ensureJpegOrPngDataUrl(ev.dataUrl);
-          if (!validDataUrl) continue;
-          const isPng = validDataUrl.startsWith('data:image/png');
-          const embeddedImg = isPng ? await pdfDoc.embedPng(validDataUrl) : await pdfDoc.embedJpg(validDataUrl);
-          const col = idx % 2;
-          const row = Math.floor(idx / 2);
-          const scale = Math.min(cellW / embeddedImg.width, (cellH - 14) / embeddedImg.height, 1);
-          const dw = embeddedImg.width * scale;
-          const dh = embeddedImg.height * scale;
-
-          const cx = boxX + 10 + col * (cellW + 10);
-          const topY = boxY + boxH - 15 - (row + 1) * cellH;
-          const dx = cx + (cellW - dw) / 2;
-          const dy = topY + (cellH - dh) / 2;
-
-          page5.drawImage(embeddedImg, { x: dx, y: dy, width: dw, height: dh });
-          page5.drawText(ev.titulo.substring(0, 42), {
-            x: cx,
-            y: dy + dh + 2,
-            size: 6.5,
-            font: helveticaBold,
-            color: rgb(0.1, 0.2, 0.4),
-          });
-        }
+        contPage.drawImage(img, { x: dx, y: dy, width: dw, height: dh });
+        contPage.drawText(ev.titulo.substring(0, 42), {
+          x: cx,
+          y: dy + dh + 2,
+          size: 7,
+          font: helveticaBold,
+          color: rgb(0.1, 0.2, 0.4),
+        });
       }
     }
+  }
 
-    // Viernes marcado
-    page5.drawText('X', {
-      x: 428,
+  // ==========================================================
+  // PÁGINA FINAL: OBSERVACIONES + ASISTENCIA VIERNES + SENATI
+  // ==========================================================
+  const lastPage = pdfDoc.getPages()[pdfDoc.getPageCount() - 1];
+  if (lastPage) {
+    // Marcar Asistencia el día VIERNES con 'X'
+    lastPage.drawText('X', {
+      x: 420,
       y: 304,
       size: 11,
       font: helveticaBold,
       color: rgb(0, 0, 0),
     });
-    page5.drawText('X', {
-      x: 470,
+    lastPage.drawText('X', {
+      x: 462,
       y: 304,
       size: 11,
       font: helveticaBold,
@@ -310,7 +428,7 @@ export async function generateInformeSemanalPDF(appData) {
   const blob = new Blob([pdfBytes], { type: 'application/pdf' });
   const blobUrl = URL.createObjectURL(blob);
 
-  // Descargar y abrir
+  // Descargar automáticamente y abrir
   const a = document.createElement('a');
   a.href = blobUrl;
   a.download = 'Informe_Clase_Semana_' + (appData.semanaActual || 1) + '.pdf';
