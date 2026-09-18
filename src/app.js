@@ -203,10 +203,10 @@ function getSeminarioActividad(actNum) {
       extras: []
     };
   }
-  if (!appData.informeSeminario.actividades[actNum].extras) {
-    appData.informeSeminario.actividades[actNum].extras = [];
-  }
-  return appData.informeSeminario.actividades[actNum];
+  const act = appData.informeSeminario.actividades[actNum];
+  if (!act.extras) act.extras = [];
+
+  return act;
 }
 
 function getWeekTotalHours(wk) {
@@ -476,7 +476,7 @@ function populateForm() {
 
     // Tarea Significativa global del seminario
     document.getElementById('ts-titulo').value = semData.tituloGlobal || act.titulo || 'Desarrollo de la aplicación web PetShop con módulos de gestión de mascotas, clientes, adopciones y dashboard en Angular';
-    document.getElementById('ts-proceso').value = semData.procesoGlobal || 'El desarrollo de la aplicación web se inició configurando el entorno en Angular con arquitectura de componentes Standalone y definiendo las rutas SPA principales en app.routes.ts.\n\nPosteriormente, se implementaron los módulos principales con formularios reactivos y template-driven, aplicando validaciones sintácticas estrictas para DNI, correo electrónico y campos requeridos.\n\nSe diseñó e integró la lógica de negocio mediante servicios asíncronos en TypeScript, gestionando el estado de las entidades y maquetando un Dashboard con métricas clave y tarjetas KPI.\n\nFinalmente, se realizaron las pruebas funcionales de navegación y rendimiento ejecutando el proyecto en el servidor local de desarrollo (http://localhost:4200/), verificando el correcto envío de datos y la ausencia de errores en la consola DevTools.';
+    document.getElementById('ts-proceso').value = semData.procesoGlobal || 'El desarrollo de la aplicación web se inició configurando el entorno en Angular con arquitectura de componentes Standalone y definiendo las rutas SPA principales en app.routes.ts.\n\nPosteriormente, se implementaron los módulos principales con formularios reactivos y template-driven, aplicando validaciones sintácticas strictly para DNI, correo electrónico y campos requeridos.\n\nSe diseñó e integró la lógica de negocio mediante servicios asíncronos en TypeScript, gestionando el estado de las entidades y maquetando un Dashboard con métricas clave y tarjetas KPI.\n\nFinalmente, se realizaron las pruebas funcionales de navegación y rendimiento ejecutando el proyecto en el servidor local de desarrollo (http://localhost:4200/), verificando el correcto envío de datos y la ausencia de errores en la consola DevTools.';
     document.getElementById('ts-seguridad').value = semData.seguridadGlobal || '• Aplicación estricta de normas de ergonomía ocupacional: postura de columna a 90° frente al escritorio y altura del monitor nivelada a la vista.\n• Cumplimiento de la regla 20-20-20 (descanso visual de 20 segundos cada 20 minutos).\n• Mantenimiento del puesto de trabajo ordenado, política de cero papel y ahorro eficiente de energía eléctrica.';
     document.getElementById('ts-herramientas').value = semData.herramientasGlobal || 'Visual Studio Code, Angular CLI, TypeScript, HTML5/CSS3, Node.js, Postman, Chrome DevTools, Git, Windows 11.';
 
@@ -545,16 +545,18 @@ function renderExtraEvidencesList(act) {
   const extras = act.extras || [];
 
   if (extras.length === 0) {
-    container.innerHTML = `<div style="grid-column: 1 / -1; text-align: center; color: var(--text-dim); font-size: 0.82rem; padding: 0.5rem; border: 1px dashed var(--border); border-radius: 8px;">No hay capturas adicionales agregadas a esta actividad. Usa los botones superiores para agregar capturas extra de UI o Código.</div>`;
+    container.innerHTML = `<div style="grid-column: 1 / -1; text-align: center; color: var(--text-dim); font-size: 0.82rem; padding: 0.75rem; border: 1px dashed var(--border); border-radius: 8px;">No hay capturas adicionales agregadas a esta actividad. Usa los botones superiores para agregar capturas extra de UI o Código y reordenarlas manualmente con ⬆️ Subir / ⬇️ Bajar o arrastrándolas.</div>`;
     return;
   }
 
   extras.forEach((ex, idx) => {
     const card = document.createElement('div');
-    card.className = 'evidencia-box';
+    card.className = 'evidencia-box extra-card-item';
+    card.setAttribute('draggable', 'true');
+    card.setAttribute('data-idx', idx);
 
     const isUi = ex.tipo === 'ui';
-    const titleText = isUi ? `🌐 Captura UI Extra ${idx + 1}` : `💻 Captura Código Extra ${idx + 1}`;
+    const titleText = isUi ? `🌐 Captura UI Extra #${idx + 1}` : `💻 Captura Código Extra #${idx + 1}`;
     const placeholderText = isUi ? 'Ej: http://localhost:4200/clientes' : 'Ej: clientes.component.ts:';
 
     const imgHtml = ex.img
@@ -562,9 +564,16 @@ function renderExtraEvidencesList(act) {
       : `<div style="padding: 1rem; color: var(--text-dim); font-size: 0.8rem;">Arrastra aquí una imagen o haz clic para subir</div>`;
 
     card.innerHTML = `
-      <div class="evidencia-head" style="display: flex; justify-content: space-between; align-items: center;">
-        <h3 style="font-size: 0.85rem;">${titleText}</h3>
-        <button type="button" class="btn-remove-extra" data-idx="${idx}" style="background: none; border: none; color: #ef4444; font-size: 0.8rem; cursor: pointer;" title="Eliminar captura">🗑️ Eliminar</button>
+      <div class="evidencia-head" style="display: flex; justify-content: space-between; align-items: center; gap: 0.5rem;">
+        <div style="display: flex; align-items: center; gap: 0.4rem;">
+          <span style="cursor: grab; color: var(--text-muted); font-size: 0.9rem;" title="Arrastrar para reordenar">☰</span>
+          <h3 style="font-size: 0.85rem; margin: 0;">${titleText}</h3>
+        </div>
+        <div class="card-reorder-actions" style="display: flex; gap: 0.35rem; align-items: center;">
+          <button type="button" class="btn-order-move btn-move-up" data-idx="${idx}" ${idx === 0 ? 'disabled style="opacity: 0.3; cursor: not-allowed;"' : ''} style="background: rgba(255,255,255,0.08); border: 1px solid var(--border); color: var(--primary); font-size: 0.75rem; padding: 0.2rem 0.5rem; border-radius: 4px; cursor: pointer;" title="Mover arriba">⬆️ Subir</button>
+          <button type="button" class="btn-order-move btn-move-down" data-idx="${idx}" ${idx === extras.length - 1 ? 'disabled style="opacity: 0.3; cursor: not-allowed;"' : ''} style="background: rgba(255,255,255,0.08); border: 1px solid var(--border); color: var(--primary); font-size: 0.75rem; padding: 0.2rem 0.5rem; border-radius: 4px; cursor: pointer;" title="Mover abajo">⬇️ Bajar</button>
+          <button type="button" class="btn-remove-extra" data-idx="${idx}" style="background: none; border: none; color: #ef4444; font-size: 0.8rem; cursor: pointer; margin-left: 0.2rem;" title="Eliminar captura">🗑️</button>
+        </div>
       </div>
 
       <div class="form-group" style="margin-bottom: 0.5rem;">
@@ -581,10 +590,73 @@ function renderExtraEvidencesList(act) {
       </div>
     `;
 
+    // Drag and Drop Reordering Handlers
+    card.addEventListener('dragstart', (e) => {
+      e.dataTransfer.setData('text/plain', idx.toString());
+      card.style.opacity = '0.5';
+    });
+
+    card.addEventListener('dragend', () => {
+      card.style.opacity = '1';
+      container.querySelectorAll('.extra-card-item').forEach(c => c.style.border = '');
+    });
+
+    card.addEventListener('dragover', (e) => {
+      e.preventDefault();
+      card.style.border = '2px dashed var(--primary)';
+    });
+
+    card.addEventListener('dragleave', () => {
+      card.style.border = '';
+    });
+
+    card.addEventListener('drop', (e) => {
+      e.preventDefault();
+      card.style.border = '';
+      const srcIdx = Number(e.dataTransfer.getData('text/plain'));
+      const targetIdx = idx;
+
+      if (!isNaN(srcIdx) && srcIdx !== targetIdx && act.extras[srcIdx]) {
+        const itemMoved = act.extras.splice(srcIdx, 1)[0];
+        act.extras.splice(targetIdx, 0, itemMoved);
+        renderSeminarioActivityUI();
+        showToast('Captura reordenada 🔄');
+      }
+    });
+
     container.appendChild(card);
   });
 
-  // Listeners para items extra
+  // Listeners para Mover Arriba / Mover Abajo
+  container.querySelectorAll('.btn-move-up').forEach(btn => {
+    btn.onclick = (e) => {
+      e.stopPropagation();
+      const idx = Number(btn.getAttribute('data-idx'));
+      if (idx > 0 && act.extras[idx]) {
+        const temp = act.extras[idx];
+        act.extras[idx] = act.extras[idx - 1];
+        act.extras[idx - 1] = temp;
+        renderSeminarioActivityUI();
+        showToast('Captura movida hacia arriba ⬆️');
+      }
+    };
+  });
+
+  container.querySelectorAll('.btn-move-down').forEach(btn => {
+    btn.onclick = (e) => {
+      e.stopPropagation();
+      const idx = Number(btn.getAttribute('data-idx'));
+      if (idx < act.extras.length - 1 && act.extras[idx]) {
+        const temp = act.extras[idx];
+        act.extras[idx] = act.extras[idx + 1];
+        act.extras[idx + 1] = temp;
+        renderSeminarioActivityUI();
+        showToast('Captura movida hacia abajo ⬇️');
+      }
+    };
+  });
+
+  // Inputs y botones de eliminar/vista previa
   container.querySelectorAll('.extra-tag-input').forEach(input => {
     input.oninput = (e) => {
       const idx = Number(e.target.getAttribute('data-idx'));
@@ -601,7 +673,7 @@ function renderExtraEvidencesList(act) {
         const dataUrl = await compressAndConvertImage(e.target.files[0], 1200, 0.85);
         act.extras[idx].img = dataUrl;
         renderSeminarioActivityUI();
-        showToast('¡Captura adicional cargada!');
+        showToast('¡Captura cargada!');
       }
     };
   });
@@ -611,7 +683,7 @@ function renderExtraEvidencesList(act) {
       const idx = Number(btn.getAttribute('data-idx'));
       act.extras.splice(idx, 1);
       renderSeminarioActivityUI();
-      showToast('Captura adicional eliminada');
+      showToast('Captura eliminada');
     };
   });
 
@@ -625,7 +697,7 @@ function renderExtraEvidencesList(act) {
         const modalCaption = document.getElementById('modal-img-caption');
         if (modal && modalImg) {
           modalImg.src = item.img;
-          if (modalCaption) modalCaption.innerText = item.tag || `Captura adicional (${item.tipo.toUpperCase()})`;
+          if (modalCaption) modalCaption.innerText = item.tag || `Captura (${item.tipo.toUpperCase()})`;
           modal.style.display = 'flex';
         }
       }
@@ -889,7 +961,7 @@ function syncToOfficialPrint() {
     document.getElementById('pr-emp-eval-calidad').innerText = empData.calidad || 'Excelente';
     document.getElementById('pr-emp-eval-obs').innerText = empData.observaciones || 'Desempeño conforme a los objetivos del perfil técnico.';
   } else if (modo === 'seminario') {
-    // MODO SEMINARIO ACADÉMICO (4 ACTIVIDADES CON EVIDENCIAS ILIMITADAS)
+    // MODO SEMINARIO ACADÉMICO (4 ACTIVIDADES CON EVIDENCIAS REORDENABLES)
     if (printSemanal) printSemanal.style.display = 'none';
     if (printEmpresa) printEmpresa.style.display = 'none';
     if (printSeminario) printSeminario.style.display = 'block';
@@ -906,10 +978,8 @@ function syncToOfficialPrint() {
 
     document.getElementById('pr-sem-ts-titulo').innerText = semData.tituloGlobal || 'Desarrollo de la aplicación web PetShop con módulos de gestión de mascotas, clientes, adopciones y dashboard en Angular';
     document.getElementById('pr-sem-ts-proceso').innerText = semData.procesoGlobal || 'No especificado.';
-    document.getElementById('pr-sem-ts-seguridad').innerText = semData.seguridadGlobal || 'No especificado.';
-    document.getElementById('pr-sem-ts-herramientas').innerText = semData.herramientasGlobal || 'No especificado.';
 
-    // Renderizar las 4 actividades con sus evidencias (principales + extras)
+    // Renderizar las 4 actividades con sus evidencias en el ORDEN exacto establecido por el usuario
     const container = document.getElementById('pr-sem-evidencias-container');
     if (container) {
       container.innerHTML = '';
@@ -929,14 +999,14 @@ function syncToOfficialPrint() {
           ? `<img src="${act.imgCodigo}" class="pr-evidence-img" alt="Código Actividad ${i}" />`
           : `<div class="pr-no-img">Sin captura de código CodeSnap</div>`;
 
-        // Render extras si existen
+        // Render extras en el orden manual definido por el usuario
         let extrasHtml = '';
         if (act.extras && act.extras.length > 0) {
           const extraCols = act.extras.map(ex => {
             const isUi = ex.tipo === 'ui';
             const barHtml = isUi
-              ? `<div class="pr-browser-bar">🌐 <span>${ex.tag || 'http://localhost:4200/'}</span></div>`
-              : `<div class="pr-codesnap-bar">💻 <span>${ex.tag || 'codigo.ts:'}</span></div>`;
+              ? `<div class="pr-browser-bar"><span>${ex.tag || 'http://localhost:4200/'}</span></div>`
+              : `<div class="pr-codesnap-bar"><span>${ex.tag || 'codigo.ts:'}</span></div>`;
             const imgEl = ex.img
               ? `<img src="${ex.img}" class="pr-evidence-img" alt="Evidencia Extra" />`
               : `<div class="pr-no-img">Sin imagen</div>`;
@@ -951,11 +1021,11 @@ function syncToOfficialPrint() {
           ${act.descripcion ? `<div class="pr-act-desc">${act.descripcion}</div>` : ''}
           <div class="pr-evidence-subgrid">
             <div class="pr-evidence-col">
-              <div class="pr-browser-bar">🌐 <span>${urlText}</span></div>
+              <div class="pr-browser-bar"><span>${urlText}</span></div>
               ${uiHtml}
             </div>
             <div class="pr-evidence-col">
-              <div class="pr-codesnap-bar">💻 <span>${tagText}</span></div>
+              <div class="pr-codesnap-bar"><span>${tagText}</span></div>
               ${codeHtml}
             </div>
           </div>
@@ -1117,7 +1187,7 @@ function setupDropzoneEvents() {
         img: ''
       });
       renderSeminarioActivityUI();
-      showToast('Captura extra de UI agregada. Selecciona una imagen.');
+      showToast('Captura extra de UI agregada');
     };
   }
 
@@ -1133,7 +1203,7 @@ function setupDropzoneEvents() {
         img: ''
       });
       renderSeminarioActivityUI();
-      showToast('Captura extra de código agregada. Selecciona una imagen.');
+      showToast('Captura extra de código agregada');
     };
   }
 }

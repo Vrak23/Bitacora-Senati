@@ -39,10 +39,10 @@
 
     <div class="header-actions">
       <button id="btn-guardar" class="btn btn-light" title="Guardar cambios">
-        <span class="btn-icon">💾</span> <span class="btn-text">Guardar</span>
+        <span class="btn-icon"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v11a2 2 0 0 1-2 2z"/><polyline points="17 21 17 13 7 13 7 21"/><polyline points="7 3 7 8 15 8"/></svg></span> <span class="btn-text">Guardar</span>
       </button>
       <button id="btn-imprimir" class="btn btn-accent" title="Imprimir / Guardar PDF">
-        <span class="btn-icon">🖨️</span> <span class="btn-text">Imprimir / PDF</span>
+        <span class="btn-icon"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="6 9 6 2 18 2 18 9"/><path d="M6 18H4a2 2 0 0 1-2-2v-5a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v5a2 2 0 0 1-2 2h-2"/><rect x="6" y="14" width="12" height="8"/></svg></span> <span class="btn-text">Imprimir / PDF</span>
       </button>
       <a href="http://localhost:4200" id="btn-central-hub" class="btn btn-ghost" title="Volver a Central Hub">
         <span class="btn-icon">←</span> <span class="btn-text">Central Hub</span>
@@ -55,21 +55,21 @@
     <!-- SELECTOR DE FORMATO (SEMANAL VS EMPRESA 2 SEMANAS) -->
     <div class="format-switcher-container">
       <button id="btn-fmt-semanal" class="format-tab-btn active" type="button">
-        <span class="tab-icon">📄</span>
+        <span class="tab-icon"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/></svg></span>
         <span class="tab-text">
           <strong>Cuaderno Semanal</strong>
           <small>Formato DUAL-04 (1 Semana)</small>
         </span>
       </button>
       <button id="btn-fmt-empresa" class="format-tab-btn" type="button">
-        <span class="tab-icon">🏢</span>
+        <span class="tab-icon"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="4" y="2" width="16" height="20" rx="2" ry="2"/><line x1="9" y1="22" x2="9" y2="22.01"/><line x1="15" y1="22" x2="15" y2="22.01"/><line x1="9" y1="6" x2="9" y2="6.01"/><line x1="15" y1="6" x2="15" y2="6.01"/><line x1="9" y1="10" x2="9" y2="10.01"/><line x1="15" y1="10" x2="15" y2="10.01"/><line x1="9" y1="14" x2="9" y2="14.01"/><line x1="15" y1="14" x2="15" y2="14.01"/><line x1="9" y1="18" x2="9" y2="18.01"/><line x1="15" y1="18" x2="15" y2="18.01"/></svg></span>
         <span class="tab-text">
           <strong>Informe de Empresa</strong>
           <small>Formato Quincenal (2 Semanas)</small>
         </span>
       </button>
       <button id="btn-fmt-seminario" class="format-tab-btn" type="button">
-        <span class="tab-icon">🎓</span>
+        <span class="tab-icon"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M22 10v6M2 10l10-5 10 5-10 5z"/><path d="M6 12v5c3 3 9 3 12 0v-5"/></svg></span>
         <span class="tab-text">
           <strong>Informe de Seminario</strong>
           <small>4 Actividades / Evidencias Visuales</small>
@@ -79,7 +79,7 @@
 
     <!-- BARRA DE SEMANAS / PERIODOS -->
     <div class="weeks-bar">
-      <span id="periods-label" class="weeks-label">📅 Seleccionar Semana:</span>
+      <span id="periods-label" class="weeks-label">Seleccionar Semana:</span>
       <div id="weeks-pills-container" class="weeks-pills-scroll"></div>
     </div>
 
@@ -222,7 +222,7 @@
 
       <!-- ASISTENTE DE PLANTILLAS -->
       <div class="template-bar">
-        <span>⚡ Asistente de Redacción Técnica:</span>
+        <span>Asistente de Redacción Técnica:</span>
         <select id="template-select"></select>
       </div>
 
@@ -252,7 +252,7 @@
       <!-- EVALUACIÓN Y CRITERIOS DEL MONITOR (SOLO MODO EMPRESA 2 SEMANAS) -->
       <div id="empresa-eval-card" class="empresa-eval-card" style="display: none; margin-top: 1.25rem;">
         <div class="eval-card-header">
-          <h3>⭐ Evaluación de la Empresa Formadora (Quincenal)</h3>
+          <h3>Evaluación de la Empresa Formadora (Quincenal)</h3>
         </div>
         <div class="form-grid-3" style="margin-bottom: 1rem;">
           <div class="form-group">
@@ -290,7 +290,7 @@
     <!-- SECCIÓN 4: EVIDENCIAS VISUALES DE LAS 4 ACTIVIDADES (MODO SEMINARIO) -->
     <section id="seminario-evidencias-card" class="card-section" style="display: none;">
       <div class="section-head">
-        <h2>📸 4. Evidencias Visuales de las 4 Últimas Actividades</h2>
+        <h2>4. Evidencias Visuales de las 4 Últimas Actividades</h2>
       </div>
       <p class="section-desc" style="color: var(--text-muted, #94a3b8); margin-bottom: 1rem; font-size: 0.9rem;">
         Carga las capturas de pantalla de la <strong>Interfaz Web (UI)</strong> y del <strong>Código Fuente (CodeSnap)</strong> para cada una de las 4 actividades requeridas en tu informe de seminario SENATI.
@@ -322,7 +322,7 @@
           <!-- EVIDENCIA 1: UI / INTERFAZ WEB -->
           <div class="evidencia-box">
             <div class="evidencia-head">
-              <h3>🌐 Evidencia 1: Captura de Interfaz Web (UI)</h3>
+              <h3>Evidencia 1: Captura de Interfaz Web (UI)</h3>
             </div>
             
             <div class="form-group" style="margin-bottom: 0.75rem;">
@@ -340,15 +340,15 @@
             <div id="dropzone-ui" class="dropzone-box">
               <input type="file" id="file-ui-img" accept="image/*" class="file-hidden-input" />
               <div id="ui-dropzone-empty" class="dropzone-empty">
-                <span class="dropzone-icon">🖼️</span>
+                <span class="dropzone-icon"><svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="18" height="18" rx="2" ry="2"/><circle cx="8.5" cy="8.5" r="1.5"/><polyline points="21 15 16 10 5 21"/></svg></span>
                 <p><strong>Arrastra aquí la captura de la interfaz</strong> o haz clic para seleccionar</p>
                 <small>Formatos: PNG, JPG, WebP (compresión automática)</small>
               </div>
               <div id="ui-dropzone-preview" class="dropzone-preview" style="display: none;">
                 <img id="img-preview-ui" src="" alt="Captura UI" />
                 <div class="preview-actions">
-                  <button id="btn-view-ui" type="button" class="btn-preview-action view" title="Ver pantalla completa">🔍 Ampliar</button>
-                  <button id="btn-remove-ui" type="button" class="btn-preview-action remove" title="Eliminar imagen">🗑️ Eliminar</button>
+                  <button id="btn-view-ui" type="button" class="btn-preview-action view" title="Ver pantalla completa">Ampliar</button>
+                  <button id="btn-remove-ui" type="button" class="btn-preview-action remove" title="Eliminar imagen">Eliminar</button>
                 </div>
               </div>
             </div>
@@ -357,7 +357,7 @@
           <!-- EVIDENCIA 2: CÓDIGO (CODESNAP) -->
           <div class="evidencia-box">
             <div class="evidencia-head">
-              <h3>💻 Evidencia 2: Captura de Código Fuente (CodeSnap)</h3>
+              <h3>Evidencia 2: Captura de Código Fuente (CodeSnap)</h3>
             </div>
 
             <div class="form-group" style="margin-bottom: 0.75rem;">
@@ -368,15 +368,15 @@
             <div id="dropzone-codigo" class="dropzone-box">
               <input type="file" id="file-codigo-img" accept="image/*" class="file-hidden-input" />
               <div id="codigo-dropzone-empty" class="dropzone-empty">
-                <span class="dropzone-icon">⚡</span>
+                <span class="dropzone-icon"><svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><polyline points="16 18 22 12 16 6"/><polyline points="8 6 2 12 8 18"/></svg></span>
                 <p><strong>Arrastra aquí la captura del código CodeSnap</strong> o haz clic para seleccionar</p>
                 <small>Formatos: PNG, JPG, WebP (compresión automática)</small>
               </div>
               <div id="codigo-dropzone-preview" class="dropzone-preview" style="display: none;">
                 <img id="img-preview-codigo" src="" alt="Captura Código" />
                 <div class="preview-actions">
-                  <button id="btn-view-codigo" type="button" class="btn-preview-action view" title="Ver pantalla completa">🔍 Ampliar</button>
-                  <button id="btn-remove-codigo" type="button" class="btn-preview-action remove" title="Eliminar imagen">🗑️ Eliminar</button>
+                  <button id="btn-view-codigo" type="button" class="btn-preview-action view" title="Ver pantalla completa">Ampliar</button>
+                  <button id="btn-remove-codigo" type="button" class="btn-preview-action remove" title="Eliminar imagen">Eliminar</button>
                 </div>
               </div>
             </div>
@@ -385,10 +385,10 @@
 
         <!-- CAPTURAS ADICIONALES DE LA ACTIVIDAD -->
         <div class="extra-evidencias-head" style="margin-top: 1.5rem; padding-top: 1rem; border-top: 1px dashed var(--border); display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 0.5rem;">
-          <h4 style="font-size: 0.95rem; font-weight: 700; color: var(--primary);">📸 Capturas / Evidencias Adicionales de esta Actividad:</h4>
+          <h4 style="font-size: 0.95rem; font-weight: 700; color: var(--primary);">Capturas / Evidencias Adicionales de esta Actividad:</h4>
           <div class="extra-btn-group" style="display: flex; gap: 0.5rem;">
-            <button id="btn-add-extra-ui" type="button" class="btn btn-sm btn-ghost" style="border: 1px dashed var(--primary); color: var(--primary); font-size: 0.78rem;">🌐 + Agregar Captura UI</button>
-            <button id="btn-add-extra-codigo" type="button" class="btn btn-sm btn-ghost" style="border: 1px dashed #38bdf8; color: #38bdf8; font-size: 0.78rem;">💻 + Agregar Captura Código</button>
+            <button id="btn-add-extra-ui" type="button" class="btn btn-sm btn-ghost" style="border: 1px dashed var(--primary); color: var(--primary); font-size: 0.78rem;">+ Agregar Captura UI</button>
+            <button id="btn-add-extra-codigo" type="button" class="btn btn-sm btn-ghost" style="border: 1px dashed #38bdf8; color: #38bdf8; font-size: 0.78rem;">+ Agregar Captura Código</button>
           </div>
         </div>
 
