@@ -173,11 +173,9 @@ export async function generateInformeSemanalPDF(appData) {
   }
 
   // ==========================================================
-  // PÁGINA 4: TAREA Y DESCRIPCIÓN COMPLETA DEL PROCESO
+  // PÁGINA 4: EXCLUSIVAMENTE TAREA Y DESCRIPCIÓN DEL PROCESO
   // ==========================================================
-  let currentPage = pages[3]; // Página 4
-  let contPageCount = 0;
-
+  const page4 = pages[3]; // Página 4
   const act1 = (semData.actividades && semData.actividades[1]) || {};
   const taskTitle = semData.tituloGlobal || act1.titulo || 'Desarrollo de Aplicaciones Web y Soluciones Informáticas';
   
@@ -196,8 +194,8 @@ export async function generateInformeSemanalPDF(appData) {
     processDesc = 'Ejecución y desarrollo de las actividades técnicas programadas para la sesión práctica.';
   }
 
-  // 1. Limpiar completamente el área inferior de Página 4
-  currentPage.drawRectangle({
+  // 1. Limpiar completamente el área editable de Página 4
+  page4.drawRectangle({
     x: 40,
     y: 10,
     width: 515,
@@ -206,308 +204,242 @@ export async function generateInformeSemanalPDF(appData) {
   });
 
   // 2. Encabezado Tarea más significativa
-  currentPage.drawText('Tarea más significativa:', {
+  let curY = 760;
+  page4.drawText('Tarea más significativa:', {
     x: 71,
-    y: 760,
+    y: curY,
     size: 11,
     font: helveticaBold,
     color: rgb(0, 0, 0),
   });
-  currentPage.drawLine({
-    start: { x: 71, y: 737 },
-    end: { x: 525, y: 737 },
-    thickness: 0.75,
-    color: rgb(0, 0, 0),
-  });
+  curY -= 16;
 
-  // Título de la tarea (puede tener hasta 2 líneas si es largo)
-  const titleLines = wrapText(taskTitle, helveticaBold, 9.5, 454);
-  if (titleLines[0]) {
-    currentPage.drawText(titleLines[0], {
+  // 3. Título de la tarea: salto de línea automático si es largo
+  const titleFontSize = 9.5;
+  const titleLineHeight = 14;
+  const titleLines = wrapText(taskTitle, helveticaBold, titleFontSize, 454);
+  for (const tLine of titleLines) {
+    page4.drawText(tLine, {
       x: 71,
-      y: 741,
-      size: 9.5,
+      y: curY,
+      size: titleFontSize,
       font: helveticaBold,
       color: rgb(0, 0, 0),
     });
+    page4.drawLine({
+      start: { x: 71, y: curY - 3 },
+      end: { x: 525, y: curY - 3 },
+      thickness: 0.75,
+      color: rgb(0, 0, 0),
+    });
+    curY -= titleLineHeight;
   }
+  curY -= 12;
 
-  // 3. Encabezado Descripción del proceso
-  currentPage.drawText('Descripción del proceso:', {
+  // 4. Encabezado Descripción del proceso
+  page4.drawText('Descripción del proceso:', {
     x: 71,
-    y: 710,
+    y: curY,
     size: 11,
     font: helveticaBold,
     color: rgb(0, 0, 0),
   });
+  curY -= 18;
 
-  // 4. Texto completo de la descripción del proceso
-  const procFontSize = 8.5;
-  const procLineHeight = 11.5;
+  // 5. Texto completo de la descripción del proceso
+  const procFontSize = 9;
+  const procLineHeight = 13.5;
   const procLines = wrapText(processDesc, helvetica, procFontSize, 454);
 
-  let currentY = 692;
   for (const line of procLines) {
     if (line) {
-      currentPage.drawText(line, {
+      page4.drawText(line, {
         x: 71,
-        y: currentY,
+        y: curY,
         size: procFontSize,
         font: helvetica,
         color: rgb(0, 0, 0),
       });
     }
-    currentY -= procLineHeight;
+    curY -= procLineHeight;
   }
 
-  currentY -= 15; // Espacio después de la descripción
+  // ==========================================================
+  // PÁGINAS DE CAPTURAS: 2 CAPTURAS GRANDES POR PÁGINA
+  // (Inician en una hoja nueva a partir de la Página 5)
+  // ==========================================================
+  let contPageCount = 0;
 
-  // Helper para crear una nueva página de continuación antes de la página final de Observaciones
-  function createContinuationPage() {
+  function createCapturePage(isFirstCapturePage = false) {
     contPageCount++;
+    // Insertar página justo antes de la última página (Observaciones/Asistencia)
     const newPage = pdfDoc.insertPage(pdfDoc.getPageCount() - 1, [595.25, 842]);
     
-    // Encabezado con recuadro
-    const bW = 280;
+    // Contenedor / Marco exterior oficial
+    newPage.drawRectangle({
+      x: 55,
+      y: 45,
+      width: 485,
+      height: 752,
+      borderColor: rgb(0, 0, 0),
+      borderWidth: 0.8,
+      color: rgb(1, 1, 1),
+    });
+
+    // Encabezado con recuadro central
+    const bW = 320;
     const bH = 26;
     const bX = (595.25 - bW) / 2;
     newPage.drawRectangle({
       x: bX,
-      y: 775,
+      y: 771,
       width: bW,
       height: bH,
       borderColor: rgb(0, 0, 0),
       borderWidth: 1,
       color: rgb(1, 1, 1),
     });
-    newPage.drawText('Esquema, dibujo, capturas (Cont. ' + contPageCount + ')', {
-      x: bX + 22,
-      y: 783,
-      size: 11.5,
+
+    const headerText = isFirstCapturePage 
+      ? 'HACER ESQUEMA, DIBUJO O DIAGRAMA' 
+      : `Esquema, dibujo, capturas (Cont. ${contPageCount - 1})`;
+    
+    const textW = helveticaBold.widthOfTextAtSize(headerText, 11);
+    newPage.drawText(headerText, {
+      x: (595.25 - textW) / 2,
+      y: 779,
+      size: 11,
       font: helveticaBold,
       color: rgb(0, 0, 0),
     });
 
-    return { page: newPage, startY: 745 };
+    return newPage;
   }
 
-  // 5. Dibujar recuadro central: Esquema, dibujo, capturas
-  // Si no hay suficiente espacio en Página 4 (mínimo 180 pt), pasar a nueva página
-  if (currentY < 180) {
-    const next = createContinuationPage();
-    currentPage = next.page;
-    currentY = next.startY;
-  } else {
-    const boxW = 280;
-    const boxH = 26;
-    const boxX = (595.25 - boxW) / 2;
-    currentPage.drawRectangle({
-      x: boxX,
-      y: currentY - boxH,
-      width: boxW,
-      height: boxH,
-      borderColor: rgb(0, 0, 0),
-      borderWidth: 1,
-      color: rgb(1, 1, 1),
-    });
-    currentPage.drawText('Esquema, dibujo, capturas', {
-      x: boxX + 45,
-      y: currentY - boxH + 8,
-      size: 13,
-      font: helveticaBold,
-      color: rgb(0, 0, 0),
-    });
-    currentY -= (boxH + 20);
-  }
+  let currentCapturePage = null;
+  let currentSlotIndex = 2; // 0 = superior, 1 = inferior, >=2 = requiere nueva hoja
+  let webHeaderDrawn = false;
+  let codeHeaderDrawn = false;
 
-  // ==========================================================
-  // 6. DIBUJAR TODAS LAS CAPTURAS DE LA CATEGORÍA WEB PRIMERO
-  // ==========================================================
-  if (webEvidencias.length > 0) {
-    // Si queda poco espacio para el título Web, pasar de página
-    if (currentY < 120) {
-      const next = createContinuationPage();
-      currentPage = next.page;
-      currentY = next.startY;
+  const maxSlotW = 465;
+
+  // Función para dibujar una captura en el slot actual (0 o 1)
+  async function renderCaptureItem(item, category) {
+    const validDataUrl = await ensureJpegOrPngDataUrl(item.dataUrl);
+    if (!validDataUrl) return;
+
+    if (currentSlotIndex >= 2) {
+      currentCapturePage = createCapturePage(contPageCount === 0);
+      currentSlotIndex = 0;
     }
 
-    currentPage.drawText('Web:', {
-      x: 71,
-      y: currentY,
-      size: 15,
-      font: helveticaBold,
-      color: rgb(0, 0, 0),
-    });
-    currentY -= 16;
+    const isPng = validDataUrl.startsWith('data:image/png');
+    const img = isPng ? await pdfDoc.embedPng(validDataUrl) : await pdfDoc.embedJpg(validDataUrl);
 
-    // Procesar capturas Web en pares (2 por fila)
-    for (let i = 0; i < webEvidencias.length; i += 2) {
-      const pair = webEvidencias.slice(i, i + 2);
-      const targetSlotH = 140; // Altura estándar para Web
+    let needsCategoryHeader = false;
+    if (category === 'web' && !webHeaderDrawn) {
+      needsCategoryHeader = true;
+      webHeaderDrawn = true;
+    } else if (category === 'codigo' && !codeHeaderDrawn) {
+      needsCategoryHeader = true;
+      codeHeaderDrawn = true;
+    }
 
-      // Si la fila no cabe en la página actual, crear nueva página
-      if (currentY - (targetSlotH + 25) < 35) {
-        const next = createContinuationPage();
-        currentPage = next.page;
-        currentY = next.startY;
-      }
+    let topY, maxSlotH;
 
-      if (pair.length === 1) {
-        const ev = pair[0];
-        const validDataUrl = await ensureJpegOrPngDataUrl(ev.dataUrl);
-        if (validDataUrl) {
-          const isPng = validDataUrl.startsWith('data:image/png');
-          const img = isPng ? await pdfDoc.embedPng(validDataUrl) : await pdfDoc.embedJpg(validDataUrl);
-          const maxW = 454;
-          const maxH = targetSlotH;
-          const scale = Math.min(maxW / img.width, maxH / img.height, 1);
-          const dw = img.width * scale;
-          const dh = img.height * scale;
-          const dx = 71 + (454 - dw) / 2;
-          const dy = currentY - dh;
-
-          currentPage.drawImage(img, { x: dx, y: dy, width: dw, height: dh });
-          currentPage.drawText(ev.titulo.substring(0, 70), {
-            x: dx,
-            y: dy + dh + 2,
-            size: 7,
-            font: helveticaBold,
-            color: rgb(0.1, 0.2, 0.4),
-          });
-          currentY = dy - 18;
-        }
+    if (currentSlotIndex === 0) {
+      // Slot Superior
+      if (needsCategoryHeader) {
+        const catTitle = category === 'web' ? 'Web:' : 'Código:';
+        currentCapturePage.drawText(catTitle, {
+          x: 65,
+          y: 748,
+          size: 14,
+          font: helveticaBold,
+          color: rgb(0, 0, 0),
+        });
+        currentCapturePage.drawText(item.titulo.substring(0, 85), {
+          x: 65,
+          y: 730,
+          size: 8.5,
+          font: helveticaBold,
+          color: rgb(0.1, 0.2, 0.4),
+        });
+        topY = 722;
+        maxSlotH = 300;
       } else {
-        const cellW = (454 - 14) / 2;
-        let maxDrawnH = 0;
-        const embeddedList = [];
-
-        for (let idx = 0; idx < 2; idx++) {
-          const ev = pair[idx];
-          const validDataUrl = await ensureJpegOrPngDataUrl(ev.dataUrl);
-          if (validDataUrl) {
-            const isPng = validDataUrl.startsWith('data:image/png');
-            const img = isPng ? await pdfDoc.embedPng(validDataUrl) : await pdfDoc.embedJpg(validDataUrl);
-            const scale = Math.min(cellW / img.width, targetSlotH / img.height, 1);
-            const dw = img.width * scale;
-            const dh = img.height * scale;
-            maxDrawnH = Math.max(maxDrawnH, dh);
-            embeddedList.push({ img, dw, dh, ev, colIdx: idx });
-          }
-        }
-
-        for (const item of embeddedList) {
-          const cx = 71 + item.colIdx * (cellW + 14);
-          const dx = cx + (cellW - item.dw) / 2;
-          const dy = currentY - item.dh;
-
-          currentPage.drawImage(item.img, { x: dx, y: dy, width: item.dw, height: item.dh });
-          currentPage.drawText(item.ev.titulo.substring(0, 42), {
-            x: cx,
-            y: dy + item.dh + 2,
-            size: 6.5,
-            font: helveticaBold,
-            color: rgb(0.1, 0.2, 0.4),
-          });
-        }
-
-        currentY -= (maxDrawnH + 18);
+        currentCapturePage.drawText(item.titulo.substring(0, 85), {
+          x: 65,
+          y: 748,
+          size: 8.5,
+          font: helveticaBold,
+          color: rgb(0.1, 0.2, 0.4),
+        });
+        topY = 738;
+        maxSlotH = 316;
+      }
+    } else {
+      // Slot Inferior (Slot 1)
+      if (needsCategoryHeader) {
+        const catTitle = category === 'web' ? 'Web:' : 'Código:';
+        currentCapturePage.drawText(catTitle, {
+          x: 65,
+          y: 405,
+          size: 14,
+          font: helveticaBold,
+          color: rgb(0, 0, 0),
+        });
+        currentCapturePage.drawText(item.titulo.substring(0, 85), {
+          x: 65,
+          y: 387,
+          size: 8.5,
+          font: helveticaBold,
+          color: rgb(0.1, 0.2, 0.4),
+        });
+        topY = 379;
+        maxSlotH = 300;
+      } else {
+        currentCapturePage.drawText(item.titulo.substring(0, 85), {
+          x: 65,
+          y: 403,
+          size: 8.5,
+          font: helveticaBold,
+          color: rgb(0.1, 0.2, 0.4),
+        });
+        topY = 395;
+        maxSlotH = 316;
       }
     }
+
+    const scale = Math.min(maxSlotW / img.width, maxSlotH / img.height, 1);
+    const dw = img.width * scale;
+    const dh = img.height * scale;
+    const dx = 65 + (maxSlotW - dw) / 2;
+    const dy = topY - dh;
+
+    currentCapturePage.drawImage(img, {
+      x: dx,
+      y: dy,
+      width: dw,
+      height: dh
+    });
+
+    currentSlotIndex++;
   }
 
-  // ==========================================================
-  // 7. DIBUJAR TODAS LAS CAPTURAS DE LA CATEGORÍA CÓDIGO SEGUNDO
-  // ==========================================================
-  if (codeEvidencias.length > 0) {
-    // Si queda poco espacio para el título Código, pasar de página
-    if (currentY < 120) {
-      const next = createContinuationPage();
-      currentPage = next.page;
-      currentY = next.startY;
-    }
+  // 1. Dibujar todas las capturas Web
+  for (const item of webEvidencias) {
+    await renderCaptureItem(item, 'web');
+  }
 
-    currentPage.drawText('Código:', {
-      x: 71,
-      y: currentY,
-      size: 15,
-      font: helveticaBold,
-      color: rgb(0, 0, 0),
-    });
-    currentY -= 16;
+  // 2. Dibujar todas las capturas de Código
+  for (const item of codeEvidencias) {
+    await renderCaptureItem(item, 'codigo');
+  }
 
-    // Procesar capturas Código en pares (2 por fila)
-    for (let i = 0; i < codeEvidencias.length; i += 2) {
-      const pair = codeEvidencias.slice(i, i + 2);
-      const targetSlotH = 150; // Altura estándar para Código
-
-      // Si la fila no cabe en la página actual, crear nueva página
-      if (currentY - (targetSlotH + 25) < 35) {
-        const next = createContinuationPage();
-        currentPage = next.page;
-        currentY = next.startY;
-      }
-
-      if (pair.length === 1) {
-        const ev = pair[0];
-        const validDataUrl = await ensureJpegOrPngDataUrl(ev.dataUrl);
-        if (validDataUrl) {
-          const isPng = validDataUrl.startsWith('data:image/png');
-          const img = isPng ? await pdfDoc.embedPng(validDataUrl) : await pdfDoc.embedJpg(validDataUrl);
-          const maxW = 454;
-          const maxH = targetSlotH;
-          const scale = Math.min(maxW / img.width, maxH / img.height, 1);
-          const dw = img.width * scale;
-          const dh = img.height * scale;
-          const dx = 71 + (454 - dw) / 2;
-          const dy = currentY - dh;
-
-          currentPage.drawImage(img, { x: dx, y: dy, width: dw, height: dh });
-          currentPage.drawText(ev.titulo.substring(0, 70), {
-            x: dx,
-            y: dy + dh + 2,
-            size: 7,
-            font: helveticaBold,
-            color: rgb(0.1, 0.2, 0.4),
-          });
-          currentY = dy - 18;
-        }
-      } else {
-        const cellW = (454 - 14) / 2;
-        let maxDrawnH = 0;
-        const embeddedList = [];
-
-        for (let idx = 0; idx < 2; idx++) {
-          const ev = pair[idx];
-          const validDataUrl = await ensureJpegOrPngDataUrl(ev.dataUrl);
-          if (validDataUrl) {
-            const isPng = validDataUrl.startsWith('data:image/png');
-            const img = isPng ? await pdfDoc.embedPng(validDataUrl) : await pdfDoc.embedJpg(validDataUrl);
-            const scale = Math.min(cellW / img.width, targetSlotH / img.height, 1);
-            const dw = img.width * scale;
-            const dh = img.height * scale;
-            maxDrawnH = Math.max(maxDrawnH, dh);
-            embeddedList.push({ img, dw, dh, ev, colIdx: idx });
-          }
-        }
-
-        for (const item of embeddedList) {
-          const cx = 71 + item.colIdx * (cellW + 14);
-          const dx = cx + (cellW - item.dw) / 2;
-          const dy = currentY - item.dh;
-
-          currentPage.drawImage(item.img, { x: dx, y: dy, width: item.dw, height: item.dh });
-          currentPage.drawText(item.ev.titulo.substring(0, 42), {
-            x: cx,
-            y: dy + item.dh + 2,
-            size: 6.5,
-            font: helveticaBold,
-            color: rgb(0.1, 0.2, 0.4),
-          });
-        }
-
-        currentY -= (maxDrawnH + 18);
-      }
-    }
+  // Si no había capturas en absoluto, crear una hoja de capturas vacía
+  if (webEvidencias.length === 0 && codeEvidencias.length === 0) {
+    createCapturePage(true);
   }
 
   // ==========================================================
