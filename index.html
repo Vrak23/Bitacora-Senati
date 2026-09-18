@@ -69,10 +69,10 @@
         </span>
       </button>
       <button id="btn-fmt-seminario" class="format-tab-btn" type="button">
-        <span class="tab-icon"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M22 10v6M2 10l10-5 10 5-10 5z"/><path d="M6 12v5c3 3 9 3 12 0v-5"/></svg></span>
+        <span class="tab-icon"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/></svg></span>
         <span class="tab-text">
-          <strong>Informe de Seminario</strong>
-          <small>4 Actividades / Evidencias Visuales</small>
+          <strong>Informe Semanal</strong>
+          <small>Informe de Clase (Viernes) / Evidencias</small>
         </span>
       </button>
     </div>
@@ -658,61 +658,251 @@
       </div>
     </div>
 
-    <!-- 3. FORMATO SEMINARIO: INFORME DE PRÁCTICA Y SEMINARIO (4 ACTIVIDADES CON EVIDENCIAS VISUALES) -->
-    <div id="print-view-seminario" class="print-page" style="display: none;">
-      <div class="print-header">
-        <div class="print-logo-senati">SENATI</div>
-        <div class="print-header-center">
-          <h3>SERVICIO NACIONAL DE ADIESTRAMIENTO EN TRABAJO INDUSTRIAL</h3>
-          <h4>DIRECCIÓN ZONAL / ESCUELA DE TECNOLOGÍAS DE LA INFORMACIÓN</h4>
-          <strong style="font-size: 11pt;">INFORME DE CLASE Y SEMINARIO DE PRÁCTICAS (PAWD-301)</strong>
+    <!-- 3. FORMATO INFORME SEMANAL (INFORME DE CLASE - CUADERNILLO OFICIAL DE 6 PÁGINAS) -->
+    <div id="print-view-seminario" class="print-booklet-container" style="display: none;">
+      
+      <!-- PÁGINA 1: PORTADA OFICIAL -->
+      <div class="print-page page-portada">
+        <div class="portada-top-senati">
+          <img src="/logo.png" alt="Logo SENATI" class="portada-logo" />
+          <div class="portada-senati-inst-name">
+            SERVICIO NACIONAL DE ADIESTRAMIENTO EN TRABAJO INDUSTRIAL
+          </div>
         </div>
-        <div style="font-size: 8.5pt; font-weight: bold; border: 1px solid #000; padding: 4px; text-align: center;">
-          FORMATO PAWD-301<br>SEMINARIO
+
+        <div class="portada-dual-badge">
+          FORMACIÓN PROFESIONAL DUAL
+        </div>
+
+        <div class="portada-center-title">
+          <span class="portada-arrow">⇨</span> INFORME DE CLASE <span class="portada-arrow">⇦</span>
+        </div>
+
+        <div class="portada-bottom-code">
+          CÓDIGO N° 89001677
         </div>
       </div>
 
-      <table class="print-meta-table">
-        <tr>
-          <td><strong>ESTUDIANTE:</strong> <span id="pr-sem-estudiante"></span></td>
-          <td><strong>ID ESTUDIANTE:</strong> <span id="pr-sem-matricula"></span></td>
-          <td><strong>SEMESTRE / CICLO:</strong> <span id="pr-sem-semestre"></span></td>
-        </tr>
-        <tr>
-          <td><strong>CARRERA:</strong> <span id="pr-sem-carrera"></span></td>
-          <td><strong>CFP / ESCUELA:</strong> <span id="pr-sem-escuela"></span></td>
-          <td><strong>BLOQUE / GRUPO:</strong> <span id="pr-sem-bloque"></span></td>
-        </tr>
-        <tr>
-          <td colspan="2"><strong>INSTRUCTOR DEL CURSO:</strong> <span id="pr-sem-instructor"></span></td>
-          <td><strong>TIPO DOCUMENTO:</strong> <span>Informe de Clase (PAWD-301)</span></td>
-        </tr>
-      </table>
-
-      <!-- I. TAREA MÁS SIGNIFICATIVA Y DESCRIPCIÓN -->
-      <div class="print-section-title">I. TAREA MÁS SIGNIFICATIVA Y DESCRIPCIÓN DEL PROCESO</div>
-      <div style="font-weight: bold; margin-bottom: 4px; font-size: 9.5pt;">
-        Tarea / Proyecto: <span id="pr-sem-ts-titulo"></span>
-      </div>
-      <div class="print-box-content" id="pr-sem-ts-proceso" style="min-height: 80px; margin-bottom: 8px;"></div>
-
-      <!-- II. EVIDENCIAS VISUALES DE LAS 4 ACTIVIDADES -->
-      <div class="print-section-title">II. EVIDENCIAS VISUALES DE LAS 4 ACTIVIDADES DESARROLLADAS</div>
-      <div id="pr-sem-evidencias-container">
-        <!-- Generado dinámicamente desde app.js con capturas de UI y Código -->
-      </div>
-
-      <!-- III. FIRMAS -->
-      <div class="print-signatures-row" style="margin-top: 30px;">
-        <div class="signature-box">
-          <div style="height: 45px;"></div>
-          Firma del Estudiante
+      <!-- PÁGINA 2: HOJA DE IDENTIFICACIÓN DEL ESTUDIANTE -->
+      <div class="print-page page-identificacion">
+        <div class="ident-header-block">
+          <div class="ident-logo-side">
+            <img src="/logo.png" alt="SENATI" class="ident-logo-img" />
+          </div>
+          <div class="ident-title-side">
+            <div class="ident-zonal-row">
+              <strong>DIRECCIÓN ZONAL</strong> <span class="ident-zonal-line" id="pr-sem-zonal">LIMA CALLAO</span>
+            </div>
+            <div class="ident-dual-box">
+              FORMACIÓN PROFESIONAL DUAL
+            </div>
+          </div>
         </div>
-        <div class="signature-box">
-          <div style="height: 45px;"></div>
-          Firma y Nota del Instructor SENATI
+
+        <div class="ident-form-list">
+          <div class="ident-form-row">
+            <span class="ident-field-label">CFP/UCP/ESCUELA:</span>
+            <span class="ident-field-line" id="pr-sem-escuela"></span>
+          </div>
+          <div class="ident-form-row">
+            <span class="ident-field-label">ESTUDIANTE:</span>
+            <span class="ident-field-line" id="pr-sem-estudiante"></span>
+          </div>
+          <div class="ident-form-row-split">
+            <div class="ident-split-cell" style="flex: 1.2;">
+              <span class="ident-field-label">ID:</span>
+              <span class="ident-field-line" id="pr-sem-matricula"></span>
+            </div>
+            <div class="ident-split-cell" style="flex: 1;">
+              <span class="ident-field-label">BLOQUE:</span>
+              <span class="ident-field-line" id="pr-sem-bloque"></span>
+            </div>
+          </div>
+          <div class="ident-form-row">
+            <span class="ident-field-label">CARRERA:</span>
+            <span class="ident-field-line" id="pr-sem-carrera"></span>
+          </div>
+          <div class="ident-form-row">
+            <span class="ident-field-label">INSTRUCTOR:</span>
+            <span class="ident-field-line" id="pr-sem-instructor"></span>
+          </div>
+          <div class="ident-form-row-split">
+            <div class="ident-split-cell" style="flex: 1.2;">
+              <span class="ident-field-label">SEMESTRE:</span>
+              <span class="ident-field-line" id="pr-sem-semestre"></span>
+            </div>
+            <div class="ident-split-cell" style="flex: 1;">
+              <span class="ident-field-label">DEL:</span>
+              <span class="ident-field-line" id="pr-sem-fecha-del"></span>
+            </div>
+            <div class="ident-split-cell" style="flex: 1;">
+              <span class="ident-field-label">AL:</span>
+              <span class="ident-field-line" id="pr-sem-fecha-al"></span>
+            </div>
+          </div>
         </div>
       </div>
+
+      <!-- PÁGINA 3: INSTRUCCIONES Y ESCALA DE CALIFICACIÓN -->
+      <div class="print-page page-instrucciones">
+        <h3 class="inst-doc-title">2. INSTRUCCIONES PARA EL USO DEL CUADERNO DE INFORMES DE FORMACIÓN PRÁCTICA</h3>
+        
+        <div class="inst-block">
+          <div class="inst-subtitle">2.1. PRESENTACIÓN.</div>
+          <p class="inst-text">El Cuaderno de Informes de formación práctica es el documento de control donde el estudiante registra diariamente las tareas, operaciones y actividades que realiza durante su formación práctica en el SENATI y en la Empresa.</p>
+        </div>
+
+        <div class="inst-block">
+          <div class="inst-subtitle">2.2. INSTRUCCIONES PARA EL USO DEL CUADERNO DE INFORMES</div>
+          <div class="inst-list-item">
+            <span class="inst-bullet">a)</span>
+            <span class="inst-bullet-text">En la hoja de informe semanal el estudiante registrará diariamente las tareas desarrolladas, indicando el tiempo dedicado en cada una de ellas.</span>
+          </div>
+          <div class="inst-list-item">
+            <span class="inst-bullet">b)</span>
+            <span class="inst-bullet-text">En la hoja de informe semanal el estudiante registrará el informe de la tarea más significativa desarrollada en la semana, describiendo secuencialmente los pasos y normas técnicas aplicadas.</span>
+          </div>
+          <div class="inst-list-item">
+            <span class="inst-bullet">c)</span>
+            <span class="inst-bullet-text">Para la evaluación, el instructor revisará el cuaderno de informes semanalmente y registrará la calificación en la plataforma LMS Blackboard.</span>
+          </div>
+          <div class="inst-list-item">
+            <span class="inst-bullet">d)</span>
+            <span class="inst-bullet-text">Las observaciones y recomendaciones emitidas por el instructor serán de obligatorio cumplimiento para el estudiante.</span>
+          </div>
+        </div>
+
+        <div class="inst-block" style="margin-top: 25px;">
+          <div class="inst-subtitle">2.3. ESCALA DE CALIFICACIÓN</div>
+          <table class="inst-grading-table">
+            <thead>
+              <tr>
+                <th colspan="2" style="width: 45%;">ESCALA CUANTITATIVA</th>
+                <th style="width: 30%;">ESCALA CUALITATIVA</th>
+                <th style="width: 25%;">CONDICIÓN</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr>
+                <td style="text-align: center; font-weight: bold; width: 22%;">16,8 – 20,0</td>
+                <td style="text-align: center;">Excelente</td>
+                <td rowspan="2" style="text-align: center; font-weight: bold; vertical-align: middle;">Aprobado</td>
+                <td rowspan="2" style="text-align: center; font-weight: bold; vertical-align: middle; background: #fafafa;">Aprobado</td>
+              </tr>
+              <tr>
+                <td style="text-align: center; font-weight: bold;">13,5 – 16,7</td>
+                <td style="text-align: center;">Bueno</td>
+              </tr>
+              <tr>
+                <td style="text-align: center; font-weight: bold;">10,5 – 13,4</td>
+                <td style="text-align: center;">Regular</td>
+                <td rowspan="2" style="text-align: center; font-weight: bold; vertical-align: middle;">Desaprobado</td>
+                <td rowspan="2" style="text-align: center; font-weight: bold; vertical-align: middle; background: #fafafa;">Desaprobado</td>
+              </tr>
+              <tr>
+                <td style="text-align: center; font-weight: bold;">00 – 10,4</td>
+                <td style="text-align: center;">Deficiente</td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+
+      <!-- PÁGINA 4: TAREA MÁS SIGNIFICATIVA Y DESCRIPCIÓN DEL PROCESO (HOJA RAYADA) -->
+      <div class="print-page page-proceso">
+        <div class="proceso-top-header">
+          <div class="proceso-title-left">INFORME SEMANAL</div>
+          <div class="proceso-meta-right">
+            <span id="pr-sem-hdr-semestre">......</span> SEMESTRE &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; SEMANA N° <span id="pr-sem-hdr-semana">......</span>
+          </div>
+        </div>
+
+        <div class="proceso-task-line-wrap">
+          <span class="proceso-task-label">Tarea más significativa:</span>
+          <div class="proceso-task-value" id="pr-sem-ts-titulo"></div>
+        </div>
+
+        <div class="proceso-desc-label-row">
+          <span>Descripción del proceso:</span>
+        </div>
+
+        <div class="proceso-ruled-sheet" id="pr-sem-ts-proceso-lines">
+          <!-- Líneas rayadas con texto oficial -->
+        </div>
+      </div>
+
+      <!-- PÁGINA 5: HACER ESQUEMA / DIBUJO + AUTOCONTROL ASISTENCIA (VIERNES) + OBSERVACIONES LMS -->
+      <div class="print-page page-esquema">
+        <div class="esquema-main-frame">
+          <div class="esquema-frame-header">HACER ESQUEMA, DIBUJO O DIAGRAMA</div>
+          <div class="esquema-gallery-content" id="pr-sem-evidencias-container">
+            <!-- Galería de capturas en orden personalizado -->
+          </div>
+        </div>
+
+        <!-- AUTOCONTROL DE ASISTENCIA (VIERNES MARCADO) -->
+        <div class="autocontrol-block">
+          <div class="autocontrol-header-title">AUTOCONTROL DE ASISTENCIA POR EL ESTUDIANTE</div>
+          <table class="autocontrol-grid-table">
+            <thead>
+              <tr class="autocontrol-top-th">
+                <th colspan="6">DÍA</th>
+              </tr>
+              <tr class="autocontrol-days-th">
+                <th>LUNES</th>
+                <th>MARTES</th>
+                <th>MIÉRCOLES</th>
+                <th>JUEVES</th>
+                <th>VIERNES</th>
+                <th>SÁBADO</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr class="autocontrol-check-row">
+                <td></td>
+                <td></td>
+                <td></td>
+                <td></td>
+                <td class="viernes-marked-cell">X</td>
+                <td></td>
+              </tr>
+            </tbody>
+          </table>
+          <div class="autocontrol-justif-row">
+            <span class="justif-title">Justificación</span>
+            <div class="justif-empty-line"></div>
+          </div>
+        </div>
+
+        <!-- OBSERVACIONES Y RECOMENDACIONES LMS BLACKBOARD -->
+        <div class="observaciones-block">
+          <div class="observaciones-header-title">OBSERVACIONES Y RECOMENDACIONES</div>
+          <div class="observaciones-body-box">
+            <p class="obs-lms-note">El Instructor que revisa los informes de Prácticas realizará la retroalimentación directamente en la plataforma LMS Blackboard.</p>
+          </div>
+          <div class="observaciones-signatures-row">
+            <div class="obs-signature-cell">
+              <div class="obs-sig-line"></div>
+              <span class="obs-sig-caption">FIRMA DEL ESTUDIANTE</span>
+            </div>
+            <div class="obs-signature-cell">
+              <div class="obs-sig-line"></div>
+              <span class="obs-sig-caption">FIRMA DEL INSTRUCTOR</span>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- PÁGINA 6: CONTRAPORTADA OFICIAL SENATI -->
+      <div class="print-page page-contraportada">
+        <div class="contra-center-container">
+          <img src="/logo.png" alt="Logo SENATI" class="contra-logo-img" />
+          <div class="contra-senati-copy">
+            PROPIEDAD INTELECTUAL DEL SENATI. PROHIBIDA SU REPRODUCCIÓN Y VENTA SIN LA AUTORIZACIÓN CORRESPONDIENTE
+          </div>
+        </div>
+      </div>
+
     </div>
 
   </div>

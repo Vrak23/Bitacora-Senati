@@ -1419,81 +1419,538 @@ body {
     font-size: 8.5pt;
   }
 
-  /* ESTILOS DE EVIDENCIAS EN IMPRESIÓN SEMINARIO */
-  .pr-actividad-item {
-    page-break-inside: avoid;
-    border: 1px solid #000;
-    padding: 8px;
-    margin-bottom: 10px;
+  /* ==================================================== */
+  /* ESTILOS DEL CUADERNILLO OFICIAL DE 6 PÁGINAS SENATI */
+  /* ==================================================== */
+  .print-booklet-container {
+    width: 100%;
   }
 
-  .pr-act-header {
-    font-weight: bold;
-    font-size: 9.5pt;
-    margin-bottom: 4px;
-    border-bottom: 1px dashed #000;
-    padding-bottom: 3px;
+  .print-page {
+    page-break-after: always;
+    break-after: page;
+    box-sizing: border-box;
+    width: 100%;
+    min-height: 265mm;
+    padding: 15mm 15mm;
+    position: relative;
+    background: #ffffff !important;
+    color: #000000 !important;
+    font-family: Arial, Helvetica, sans-serif;
   }
 
-  .pr-act-desc {
-    font-size: 8.5pt;
-    font-style: italic;
-    margin-bottom: 6px;
-    color: #333;
-  }
-
-  .pr-evidence-subgrid {
-    display: grid;
-    grid-template-columns: 1fr 1fr;
-    gap: 8px;
-  }
-
-  .pr-evidence-col {
-    border: 1px solid #ccc;
-    padding: 4px;
-    background: #fafafa !important;
-  }
-
-  .pr-browser-bar {
-    background: #e2e8f0 !important;
-    border: 1px solid #cbd5e1;
-    padding: 2px 6px;
-    font-family: monospace;
-    font-size: 7.5pt;
-    color: #334155;
-    border-radius: 4px 4px 0 0;
+  /* PÁGINA 1: PORTADA */
+  .page-portada {
     display: flex;
+    flex-direction: column;
     align-items: center;
-    gap: 4px;
-    margin-bottom: 4px;
+    justify-content: space-between;
+    text-align: center;
+    padding: 30mm 15mm 25mm 15mm !important;
   }
 
-  .pr-codesnap-bar {
-    background: #1e293b !important;
-    color: #38bdf8 !important;
-    padding: 2px 6px;
-    font-family: monospace;
-    font-size: 7.5pt;
-    font-weight: bold;
-    border-radius: 4px 4px 0 0;
-    margin-bottom: 4px;
+  .portada-top-senati {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 15px;
+    width: 100%;
   }
 
-  .pr-evidence-img {
-    max-width: 100%;
-    max-height: 220px;
-    display: block;
-    margin: 0 auto;
+  .portada-logo {
+    width: 170px;
+    height: auto;
     object-fit: contain;
   }
 
-  .pr-no-img {
-    height: 90px;
+  .portada-senati-inst-name {
+    font-size: 11pt;
+    font-weight: bold;
+    letter-spacing: 0.5px;
+    color: #000000;
+    max-width: 480px;
+    line-height: 1.35;
+    text-transform: uppercase;
+  }
+
+  .portada-dual-badge {
+    background-color: #004b93 !important;
+    color: #ffffff !important;
+    font-size: 13pt;
+    font-weight: bold;
+    padding: 10px 28px;
+    border-radius: 8px;
+    letter-spacing: 0.5px;
+    display: inline-block;
+    -webkit-print-color-adjust: exact;
+    print-color-adjust: exact;
+    margin: 30px auto;
+  }
+
+  .portada-center-title {
+    font-size: 20pt;
+    font-weight: 900;
+    letter-spacing: 1px;
+    color: #000000;
     display: flex;
     align-items: center;
     justify-content: center;
+    gap: 12px;
+    margin: 20px auto;
+  }
+
+  .portada-arrow {
+    font-size: 22pt;
+  }
+
+  .portada-bottom-code {
+    font-size: 10.5pt;
+    font-weight: bold;
+    color: #000000;
+    letter-spacing: 0.5px;
+  }
+
+  /* PÁGINA 2: HOJA DE IDENTIFICACIÓN */
+  .page-identificacion {
+    padding: 20mm 15mm !important;
+  }
+
+  .ident-header-block {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-bottom: 35px;
+    padding-bottom: 10px;
+  }
+
+  .ident-logo-img {
+    width: 130px;
+    height: auto;
+    object-fit: contain;
+  }
+
+  .ident-title-side {
+    text-align: right;
+    display: flex;
+    flex-direction: column;
+    align-items: flex-end;
+    gap: 8px;
+  }
+
+  .ident-zonal-row {
+    font-size: 10pt;
+    color: #000;
+  }
+
+  .ident-zonal-line {
+    border-bottom: 1px solid #000;
+    padding: 0 10px;
+    font-weight: bold;
+    min-width: 160px;
+    display: inline-block;
+    text-align: center;
+  }
+
+  .ident-dual-box {
+    background-color: #004b93 !important;
+    color: #ffffff !important;
+    font-size: 10pt;
+    font-weight: bold;
+    padding: 6px 14px;
+    border-radius: 6px;
+    display: inline-block;
+    -webkit-print-color-adjust: exact;
+    print-color-adjust: exact;
+  }
+
+  .ident-form-list {
+    display: flex;
+    flex-direction: column;
+    gap: 20px;
+    margin-top: 15px;
+  }
+
+  .ident-form-row {
+    display: flex;
+    align-items: flex-end;
+    gap: 8px;
+    width: 100%;
+  }
+
+  .ident-form-row-split {
+    display: flex;
+    gap: 20px;
+    width: 100%;
+  }
+
+  .ident-split-cell {
+    display: flex;
+    align-items: flex-end;
+    gap: 8px;
+  }
+
+  .ident-field-label {
+    font-size: 9.5pt;
+    font-weight: bold;
+    white-space: nowrap;
+    color: #000;
+  }
+
+  .ident-field-line {
+    flex: 1;
+    border-bottom: 1px solid #000;
+    min-height: 20px;
+    font-size: 9.5pt;
+    font-weight: bold;
+    color: #000;
+    padding: 0 5px 2px 5px;
+  }
+
+  /* PÁGINA 3: INSTRUCCIONES */
+  .page-instrucciones {
+    padding: 20mm 15mm !important;
+    font-size: 9.5pt;
+    line-height: 1.45;
+  }
+
+  .inst-doc-title {
+    font-size: 10.5pt;
+    font-weight: bold;
+    margin-bottom: 20px;
+    color: #000;
+  }
+
+  .inst-block {
+    margin-bottom: 18px;
+  }
+
+  .inst-subtitle {
+    font-size: 9.5pt;
+    font-weight: bold;
+    margin-bottom: 6px;
+  }
+
+  .inst-text {
+    text-align: justify;
+    margin: 0;
+  }
+
+  .inst-list-item {
+    display: flex;
+    gap: 6px;
+    margin-bottom: 8px;
+    text-align: justify;
+  }
+
+  .inst-bullet {
+    font-weight: bold;
+    min-width: 18px;
+  }
+
+  .inst-grading-table {
+    width: 100%;
+    border-collapse: collapse;
+    margin-top: 10px;
+    border: 1px solid #000;
+  }
+
+  .inst-grading-table th, .inst-grading-table td {
+    border: 1px solid #000;
+    padding: 6px 8px;
+    font-size: 9pt;
+  }
+
+  .inst-grading-table th {
+    background: #e9e9e9 !important;
+    font-weight: bold;
+    text-align: center;
+    -webkit-print-color-adjust: exact;
+    print-color-adjust: exact;
+  }
+
+  /* PÁGINA 4: PROCESO (HOJA RAYADA) */
+  .page-proceso {
+    padding: 18mm 15mm !important;
+  }
+
+  .proceso-top-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    border-bottom: 2px solid #000;
+    padding-bottom: 4px;
+    margin-bottom: 12px;
+  }
+
+  .proceso-title-left {
+    font-size: 11pt;
+    font-weight: bold;
+  }
+
+  .proceso-meta-right {
+    font-size: 9.5pt;
+    font-weight: bold;
+  }
+
+  .proceso-task-line-wrap {
+    display: flex;
+    align-items: flex-end;
+    gap: 8px;
+    margin-bottom: 10px;
+  }
+
+  .proceso-task-label {
+    font-size: 9.5pt;
+    font-weight: bold;
+    white-space: nowrap;
+  }
+
+  .proceso-task-value {
+    flex: 1;
+    border-bottom: 1px solid #000;
+    font-size: 9.5pt;
+    font-weight: bold;
+    padding-bottom: 2px;
+  }
+
+  .proceso-desc-label-row {
+    font-size: 9.5pt;
+    font-weight: bold;
+    margin-bottom: 6px;
+  }
+
+  .proceso-ruled-sheet {
+    width: 100%;
+    min-height: 540px;
+    line-height: 28px;
+    font-size: 9.5pt;
+    font-family: 'Segoe UI', Arial, sans-serif;
+    background-image: repeating-linear-gradient(transparent, transparent 27px, #000 28px);
+    background-size: 100% 28px;
+    text-align: justify;
+    box-sizing: border-box;
+    padding-top: 2px;
+    white-space: pre-wrap;
+    -webkit-print-color-adjust: exact;
+    print-color-adjust: exact;
+  }
+
+  /* PÁGINA 5: ESQUEMA / DIAGRAMA + ASISTENCIA VIERNES + OBSERVACIONES */
+  .page-esquema {
+    padding: 15mm 15mm !important;
+    display: flex;
+    flex-direction: column;
+    justify-content: space-between;
+  }
+
+  .esquema-main-frame {
+    border: 1px solid #000;
+    width: 100%;
+    min-height: 300px;
+    max-height: 380px;
+    display: flex;
+    flex-direction: column;
+    margin-bottom: 10px;
+    overflow: hidden;
+  }
+
+  .esquema-frame-header {
+    border-bottom: 1px solid #000;
+    font-size: 8.5pt;
+    font-weight: bold;
+    padding: 4px 8px;
+    background: #f5f5f5 !important;
+    -webkit-print-color-adjust: exact;
+    print-color-adjust: exact;
+  }
+
+  .esquema-gallery-content {
+    flex: 1;
+    padding: 6px;
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(170px, 1fr));
+    gap: 6px;
+    align-items: center;
+    justify-items: center;
+    overflow: hidden;
+  }
+
+  .esquema-thumb-box {
+    border: 1px solid #bbb;
+    padding: 3px;
+    background: #fafafa;
+    width: 100%;
+    max-width: 240px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    box-sizing: border-box;
+  }
+
+  .esquema-thumb-tag {
+    font-size: 7pt;
+    font-weight: bold;
+    margin-bottom: 2px;
+    color: #333;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    width: 100%;
+    text-align: center;
+  }
+
+  .esquema-thumb-img {
+    max-width: 100%;
+    max-height: 110px;
+    object-fit: contain;
+    display: block;
+  }
+
+  .autocontrol-block {
+    margin-bottom: 10px;
+  }
+
+  .autocontrol-header-title {
+    font-size: 8.5pt;
+    font-weight: bold;
+    text-align: center;
+    margin-bottom: 4px;
+  }
+
+  .autocontrol-grid-table {
+    width: 100%;
+    border-collapse: collapse;
+    border: 1px solid #000;
+    margin-bottom: 6px;
+  }
+
+  .autocontrol-grid-table th, .autocontrol-grid-table td {
+    border: 1px solid #000;
+    text-align: center;
+    padding: 3px 4px;
     font-size: 8pt;
-    color: #777;
-    border: 1px dashed #bbb;
+  }
+
+  .autocontrol-top-th th {
+    background: #eee !important;
+    font-weight: bold;
+    font-size: 7.5pt;
+    -webkit-print-color-adjust: exact;
+    print-color-adjust: exact;
+  }
+
+  .autocontrol-days-th th {
+    font-weight: bold;
+    font-size: 7.5pt;
+  }
+
+  .autocontrol-check-row td {
+    height: 20px;
+  }
+
+  .viernes-marked-cell {
+    font-weight: 900 !important;
+    font-size: 11pt !important;
+    color: #000000 !important;
+  }
+
+  .autocontrol-justif-row {
+    display: flex;
+    align-items: flex-end;
+    gap: 8px;
+    font-size: 8pt;
+    margin-top: 4px;
+  }
+
+  .justif-title {
+    font-weight: bold;
+  }
+
+  .justif-empty-line {
+    flex: 1;
+    border-bottom: 1px solid #000;
+    min-height: 14px;
+  }
+
+  .observaciones-block {
+    margin-top: 4px;
+  }
+
+  .observaciones-header-title {
+    font-size: 8.5pt;
+    font-weight: bold;
+    margin-bottom: 4px;
+  }
+
+  .observaciones-body-box {
+    border: 1px solid #000;
+    padding: 8px;
+    min-height: 48px;
+    margin-bottom: 14px;
+  }
+
+  .obs-lms-note {
+    font-size: 8pt;
+    margin: 0;
+    line-height: 1.35;
+    color: #222;
+  }
+
+  .observaciones-signatures-row {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 30px;
+    margin-top: 10px;
+  }
+
+  .obs-signature-cell {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+  }
+
+  .obs-sig-line {
+    border-top: 1px solid #000;
+    width: 80%;
+    margin-bottom: 4px;
+    height: 1px;
+  }
+
+  .obs-sig-caption {
+    font-size: 8pt;
+    font-weight: bold;
+    color: #000;
+  }
+
+  /* PÁGINA 6: CONTRAPORTADA */
+  .page-contraportada {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    text-align: center;
+    padding: 40mm 20mm !important;
+  }
+
+  .contra-center-container {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 25px;
+    max-width: 480px;
+  }
+
+  .contra-logo-img {
+    width: 160px;
+    height: auto;
+    object-fit: contain;
+  }
+
+  .contra-senati-copy {
+    font-size: 8.5pt;
+    font-weight: bold;
+    line-height: 1.45;
+    color: #000;
+    text-transform: uppercase;
   }
 }

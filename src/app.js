@@ -961,77 +961,102 @@ function syncToOfficialPrint() {
     document.getElementById('pr-emp-eval-calidad').innerText = empData.calidad || 'Excelente';
     document.getElementById('pr-emp-eval-obs').innerText = empData.observaciones || 'Desempeño conforme a los objetivos del perfil técnico.';
   } else if (modo === 'seminario') {
-    // MODO SEMINARIO ACADÉMICO (4 ACTIVIDADES CON EVIDENCIAS REORDENABLES)
+    // MODO INFORME SEMANAL / CLASE (CUADERNILLO OFICIAL DE 6 PÁGINAS SENATI)
     if (printSemanal) printSemanal.style.display = 'none';
     if (printEmpresa) printEmpresa.style.display = 'none';
     if (printSeminario) printSeminario.style.display = 'block';
 
     const semData = appData.informeSeminario;
+    const currentWk = getWeekData(appData.semanaActual);
 
-    document.getElementById('pr-sem-estudiante').innerText = appData.estudiante || '-';
-    document.getElementById('pr-sem-matricula').innerText = appData.matricula || '-';
-    document.getElementById('pr-sem-semestre').innerText = appData.semestre || '-';
-    document.getElementById('pr-sem-carrera').innerText = appData.carrera || '-';
-    document.getElementById('pr-sem-escuela').innerText = appData.escuela || 'ETI (Escuela de TI)';
-    document.getElementById('pr-sem-bloque').innerText = appData.bloque || '406';
-    document.getElementById('pr-sem-instructor').innerText = appData.instructor || '-';
+    // Página 2: Identificación
+    const elEscuela = document.getElementById('pr-sem-escuela');
+    if (elEscuela) elEscuela.innerText = appData.escuela || 'ETI (Escuela de Tecnologías de la Información)';
 
-    document.getElementById('pr-sem-ts-titulo').innerText = semData.tituloGlobal || 'Desarrollo de la aplicación web PetShop con módulos de gestión de mascotas, clientes, adopciones y dashboard en Angular';
-    document.getElementById('pr-sem-ts-proceso').innerText = semData.procesoGlobal || 'No especificado.';
+    const elEst = document.getElementById('pr-sem-estudiante');
+    if (elEst) elEst.innerText = appData.estudiante || 'Rodrigo Daniel Ormeño Llanos';
 
-    // Renderizar las 4 actividades con sus evidencias en el ORDEN exacto establecido por el usuario
+    const elMat = document.getElementById('pr-sem-matricula');
+    if (elMat) elMat.innerText = appData.matricula || '001681961';
+
+    const elBloque = document.getElementById('pr-sem-bloque');
+    if (elBloque) elBloque.innerText = appData.bloque || '406';
+
+    const elCarrera = document.getElementById('pr-sem-carrera');
+    if (elCarrera) elCarrera.innerText = appData.carrera || 'Informática y Desarrollo de Aplicaciones Web';
+
+    const elInst = document.getElementById('pr-sem-instructor');
+    if (elInst) elInst.innerText = appData.instructor || 'Jorge Luque Chambi';
+
+    const elSemestre = document.getElementById('pr-sem-semestre');
+    if (elSemestre) elSemestre.innerText = appData.semestre || '4to';
+
+    const elFechaDel = document.getElementById('pr-sem-fecha-del');
+    if (elFechaDel) elFechaDel.innerText = currentWk.fechaInicio || 'Inicio';
+
+    const elFechaAl = document.getElementById('pr-sem-fecha-al');
+    if (elFechaAl) elFechaAl.innerText = currentWk.fechaFin || 'Fin';
+
+    // Página 4: Proceso
+    const elHdrSem = document.getElementById('pr-sem-hdr-semestre');
+    if (elHdrSem) elHdrSem.innerText = appData.semestre || '4°';
+
+    const elHdrWk = document.getElementById('pr-sem-hdr-semana');
+    if (elHdrWk) elHdrWk.innerText = appData.semanaActual || '1';
+
+    const act1 = getSeminarioActividad(1);
+    const mainTitle = semData.tituloGlobal || (act1 && act1.titulo ? act1.titulo : 'Desarrollo de Aplicaciones Web y Soluciones Informáticas');
+    const elTsTitulo = document.getElementById('pr-sem-ts-titulo');
+    if (elTsTitulo) elTsTitulo.innerText = mainTitle;
+
+    const mainProcess = semData.procesoGlobal || (act1 && act1.descripcion ? act1.descripcion : 'Ejecución y desarrollo de las actividades técnicas programadas para la sesión de formación práctica.');
+    const elTsProc = document.getElementById('pr-sem-ts-proceso-lines');
+    if (elTsProc) elTsProc.innerText = mainProcess;
+
+    // Página 5: Esquema / Diagrama con capturas en orden personalizado
     const container = document.getElementById('pr-sem-evidencias-container');
     if (container) {
       container.innerHTML = '';
+      const allEvidencias = [];
+
       for (let i = 1; i <= 4; i++) {
         const act = getSeminarioActividad(i);
-        const itemDiv = document.createElement('div');
-        itemDiv.className = 'pr-actividad-item';
-
-        const urlText = act.urlUi || 'http://localhost:4200/';
-        const tagText = act.tagCodigo || `Actividad${i}.component.ts:`;
-
-        const uiHtml = act.imgUi
-          ? `<img src="${act.imgUi}" class="pr-evidence-img" alt="UI Actividad ${i}" />`
-          : `<div class="pr-no-img">Sin captura de interfaz web</div>`;
-
-        const codeHtml = act.imgCodigo
-          ? `<img src="${act.imgCodigo}" class="pr-evidence-img" alt="Código Actividad ${i}" />`
-          : `<div class="pr-no-img">Sin captura de código CodeSnap</div>`;
-
-        // Render extras en el orden manual definido por el usuario
-        let extrasHtml = '';
-        if (act.extras && act.extras.length > 0) {
-          const extraCols = act.extras.map(ex => {
-            const isUi = ex.tipo === 'ui';
-            const barHtml = isUi
-              ? `<div class="pr-browser-bar"><span>${ex.tag || 'http://localhost:4200/'}</span></div>`
-              : `<div class="pr-codesnap-bar"><span>${ex.tag || 'codigo.ts:'}</span></div>`;
-            const imgEl = ex.img
-              ? `<img src="${ex.img}" class="pr-evidence-img" alt="Evidencia Extra" />`
-              : `<div class="pr-no-img">Sin imagen</div>`;
-            return `<div class="pr-evidence-col">${barHtml}${imgEl}</div>`;
-          }).join('');
-
-          extrasHtml = `<div class="pr-evidence-subgrid" style="margin-top: 8px;">${extraCols}</div>`;
+        if (act.imgUi) {
+          allEvidencias.push({
+            tag: `Act. ${i} UI: ${act.urlUi || 'http://localhost:4200/'}`,
+            img: act.imgUi
+          });
         }
+        if (act.imgCodigo) {
+          allEvidencias.push({
+            tag: `Act. ${i} Código: ${act.tagCodigo || `Actividad${i}.component.ts`}`,
+            img: act.imgCodigo
+          });
+        }
+        if (act.extras && act.extras.length > 0) {
+          act.extras.forEach(ex => {
+            if (ex.img) {
+              allEvidencias.push({
+                tag: `Act. ${i} ${ex.tipo === 'ui' ? 'UI' : 'Código'}: ${ex.tag || ''}`,
+                img: ex.img
+              });
+            }
+          });
+        }
+      }
 
-        itemDiv.innerHTML = `
-          <div class="pr-act-header">Actividad N° ${i}: ${act.titulo || 'Sin título'}</div>
-          ${act.descripcion ? `<div class="pr-act-desc">${act.descripcion}</div>` : ''}
-          <div class="pr-evidence-subgrid">
-            <div class="pr-evidence-col">
-              <div class="pr-browser-bar"><span>${urlText}</span></div>
-              ${uiHtml}
-            </div>
-            <div class="pr-evidence-col">
-              <div class="pr-codesnap-bar"><span>${tagText}</span></div>
-              ${codeHtml}
-            </div>
-          </div>
-          ${extrasHtml}
-        `;
-        container.appendChild(itemDiv);
+      if (allEvidencias.length > 0) {
+        allEvidencias.forEach(ev => {
+          const item = document.createElement('div');
+          item.className = 'esquema-thumb-box';
+          item.innerHTML = `
+            <div class="esquema-thumb-tag" title="${ev.tag}">${ev.tag}</div>
+            <img src="${ev.img}" class="esquema-thumb-img" alt="Evidencia" />
+          `;
+          container.appendChild(item);
+        });
+      } else {
+        container.innerHTML = `<div style="color: #666; font-size: 8.5pt; font-style: italic; padding: 25px; text-align: center; width: 100%;">Esquema, dibujo o capturas de interfaz y código fuente desarrolladas en la sesión práctica.</div>`;
       }
     }
   }
