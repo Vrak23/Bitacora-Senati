@@ -1,4 +1,5 @@
 import { PLANTILLAS_DEV } from './templates.js';
+import { generateInformeSemanalPDF } from './pdf-generator.js';
 
 // Estado de la aplicación
 const STORAGE_KEY = 'senati_bitacora_data';
@@ -1256,9 +1257,23 @@ async function handleImageUpload(file, type) {
 function setupListeners() {
   document.getElementById('btn-guardar').onclick = saveData;
 
-  document.getElementById('btn-imprimir').onclick = () => {
-    syncToOfficialPrint();
-    window.print();
+  document.getElementById('btn-imprimir').onclick = async () => {
+    readFormToCurrentState();
+    if (appData.modoFormato === 'seminario') {
+      showToast('Generando PDF oficial exacto...');
+      try {
+        await generateInformeSemanalPDF(appData);
+        showToast('¡PDF oficial generado exitosamente!');
+      } catch (err) {
+        console.error('Error al generar PDF oficial:', err);
+        showToast('Abriendo vista de impresión estándar...');
+        syncToOfficialPrint();
+        window.print();
+      }
+    } else {
+      syncToOfficialPrint();
+      window.print();
+    }
   };
 
   // Switcher de Formato Trimodal
