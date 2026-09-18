@@ -2,15 +2,16 @@ import { PDFDocument, rgb, StandardFonts } from 'pdf-lib';
 
 function wrapText(text, font, fontSize, maxWidth) {
   if (!text) return [];
-  const paragraphs = String(text).split('\n');
+  const rawParagraphs = String(text).split('\n');
   const lines = [];
 
-  for (const para of paragraphs) {
-    if (!para.trim()) {
+  for (const rawPara of rawParagraphs) {
+    const para = rawPara.trim();
+    if (!para) {
       lines.push('');
       continue;
     }
-    const words = para.split(' ');
+    const words = para.split(/\s+/);
     let currentLine = '';
 
     for (const word of words) {
@@ -119,7 +120,7 @@ export async function generateInformeSemanalPDF(appData) {
   }
 
   // ==========================================================
-  // RECOPILAR TODAS LAS CAPTURAS (SIN LÍMITE DE 4)
+  // RECOPILAR TODAS LAS CAPTURAS DE TODAS LAS ACTIVIDADES
   // ==========================================================
   const webEvidencias = [];
   const codeEvidencias = [];
@@ -176,16 +177,16 @@ export async function generateInformeSemanalPDF(appData) {
   }
 
   // ==========================================================
-  // PÁGINA 4: TAREA Y DESCRIPCIÓN COMPLETA DEL PROCESO
+  // PÁGINA 4: LAYOUT DINÁMICO Y FLUIDO (SIN COLISIONES)
   // ==========================================================
   const page4 = pages[3];
-  let overflowProcessLines = [];
+  let overflowWeb = [];
+  let overflowCod = [];
 
   if (page4) {
     const act1 = (semData.actividades && semData.actividades[1]) || {};
     const taskTitle = semData.tituloGlobal || act1.titulo || 'Desarrollo de Aplicaciones Web y Soluciones Informáticas';
     
-    // Compilar la descripción completa del proceso
     let processDesc = semData.procesoGlobal || '';
     if (!processDesc.trim()) {
       const actDescs = [];
@@ -195,19 +196,28 @@ export async function generateInformeSemanalPDF(appData) {
           actDescs.push('Actividad ' + i + ': ' + a.descripcion.trim());
         }
       }
-      processDesc = actDescs.join('\n');
+      processDesc = actDescs.join('\n\n');
     }
     if (!processDesc.trim()) {
       processDesc = 'Ejecución y desarrollo de las actividades técnicas programadas para la sesión práctica.';
     }
 
-    // 1. Tarea más significativa (Línea superior)
+    // 1. Limpiar completamente desde abajo del encabezado hasta el final de la Página 4
     page4.drawRectangle({
-      x: 71,
-      y: 736,
-      width: 454,
-      height: 16,
+      x: 40,
+      y: 10,
+      width: 515,
+      height: 770,
       color: rgb(1, 1, 1),
+    });
+
+    // 2. Encabezado Tarea más significativa
+    page4.drawText('Tarea más significativa:', {
+      x: 71,
+      y: 760,
+      size: 11,
+      font: helveticaBold,
+      color: rgb(0, 0, 0),
     });
     page4.drawLine({
       start: { x: 71, y: 737 },
@@ -217,47 +227,80 @@ export async function generateInformeSemanalPDF(appData) {
     });
     page4.drawText(String(taskTitle), {
       x: 71,
-      y: 740,
+      y: 741,
       size: 9.5,
       font: helveticaBold,
       color: rgb(0, 0, 0),
     });
 
-    // 2. Descripción completa del proceso (Espacio entre 700 y 595 pt)
-    const procFontSize = 8.5;
-    const procLineHeight = 11.5;
-    const procLines = wrapText(processDesc, helvetica, procFontSize, 450);
-
-    // Limpiar el área de líneas guía para que el texto largo se lea 100% nítido
-    page4.drawRectangle({
+    // 3. Encabezado Descripción del proceso
+    page4.drawText('Descripción del proceso:', {
       x: 71,
-      y: 596,
-      width: 454,
-      height: 98,
-      color: rgb(1, 1, 1),
+      y: 710,
+      size: 11,
+      font: helveticaBold,
+      color: rgb(0, 0, 0),
     });
 
-    // Dibujar hasta 8 líneas de descripción en la Página 4
-    const maxP4Lines = 8;
-    const p4LinesToDraw = procLines.slice(0, maxP4Lines);
-    overflowProcessLines = procLines.slice(maxP4Lines);
+    // 4. Texto completo de la descripción del proceso
+    const procFontSize = 8.5;
+    const procLineHeight = 11.5;
+    const procLines = wrapText(processDesc, helvetica, procFontSize, 454);
 
-    let startY = 684;
-    for (let lIdx = 0; lIdx < p4LinesToDraw.length; lIdx++) {
-      page4.drawText(p4LinesToDraw[lIdx], {
-        x: 73,
-        y: startY - (lIdx * procLineHeight),
-        size: procFontSize,
-        font: helvetica,
-        color: rgb(0, 0, 0),
-      });
+    let currentY = 692;
+    for (const line of procLines) {
+      if (line) {
+        page4.drawText(line, {
+          x: 71,
+          y: currentY,
+          size: procFontSize,
+          font: helvetica,
+          color: rgb(0, 0, 0),
+        });
+      }
+      currentY -= procLineHeight;
     }
 
-    // Dibujar Capturas WEB en Página 4 (área y: 275..490, x: 71..525)
-    const webAreaY = 275;
-    const webAreaH = 215;
-    const webAreaW = 454;
+    currentY -= 12; // Separación
+
+    // 5. Recuadro: Esquema, dibujo, capturas
+    const boxW = 280;
+    const boxH = 26;
+    const boxX = (595.25 - boxW) / 2;
+    page4.drawRectangle({
+      x: boxX,
+      y: currentY - boxH,
+      width: boxW,
+      height: boxH,
+      borderColor: rgb(0, 0, 0),
+      borderWidth: 1,
+      color: rgb(1, 1, 1),
+    });
+    page4.drawText('Esquema, dibujo, capturas', {
+      x: boxX + 45,
+      y: currentY - boxH + 8,
+      size: 13,
+      font: helveticaBold,
+      color: rgb(0, 0, 0),
+    });
+
+    currentY -= (boxH + 18);
+
+    // 6. Sección Web:
+    const remainingH = currentY - 30;
+    const slotH = Math.min(Math.floor((remainingH - 60) / 2), 150);
+
+    page4.drawText('Web:', {
+      x: 71,
+      y: currentY,
+      size: 15,
+      font: helveticaBold,
+      color: rgb(0, 0, 0),
+    });
+    currentY -= 15;
+
     const webOnP4 = webEvidencias.slice(0, 2);
+    overflowWeb = webEvidencias.slice(2);
 
     if (webOnP4.length === 1) {
       const ev = webOnP4[0];
@@ -265,55 +308,67 @@ export async function generateInformeSemanalPDF(appData) {
       if (validDataUrl) {
         const isPng = validDataUrl.startsWith('data:image/png');
         const img = isPng ? await pdfDoc.embedPng(validDataUrl) : await pdfDoc.embedJpg(validDataUrl);
-        const maxW = webAreaW;
-        const maxH = webAreaH - 15;
+        const maxW = 454;
+        const maxH = slotH;
         const scale = Math.min(maxW / img.width, maxH / img.height, 1);
         const dw = img.width * scale;
         const dh = img.height * scale;
-        const dx = 71 + (webAreaW - dw) / 2;
-        const dy = webAreaY + (webAreaH - dh) / 2;
+        const dx = 71 + (454 - dw) / 2;
+        const dy = currentY - dh;
 
         page4.drawImage(img, { x: dx, y: dy, width: dw, height: dh });
         page4.drawText(ev.titulo.substring(0, 60), {
           x: dx,
-          y: dy + dh + 3,
-          size: 7.5,
+          y: dy + dh + 2,
+          size: 7,
           font: helveticaBold,
           color: rgb(0.1, 0.2, 0.4),
         });
+        currentY = dy - 18;
       }
     } else if (webOnP4.length === 2) {
-      const cellW = (webAreaW - 15) / 2;
-      const cellH = webAreaH;
+      const cellW = (454 - 14) / 2;
+      let maxDrawnH = 0;
       for (let idx = 0; idx < 2; idx++) {
         const ev = webOnP4[idx];
         const validDataUrl = await ensureJpegOrPngDataUrl(ev.dataUrl);
         if (!validDataUrl) continue;
         const isPng = validDataUrl.startsWith('data:image/png');
         const img = isPng ? await pdfDoc.embedPng(validDataUrl) : await pdfDoc.embedJpg(validDataUrl);
-        const scale = Math.min(cellW / img.width, (cellH - 15) / img.height, 1);
+        const scale = Math.min(cellW / img.width, slotH / img.height, 1);
         const dw = img.width * scale;
         const dh = img.height * scale;
-        const cx = 71 + idx * (cellW + 15);
+        maxDrawnH = Math.max(maxDrawnH, dh);
+        const cx = 71 + idx * (cellW + 14);
         const dx = cx + (cellW - dw) / 2;
-        const dy = webAreaY + (cellH - dh) / 2;
+        const dy = currentY - dh;
 
         page4.drawImage(img, { x: dx, y: dy, width: dw, height: dh });
-        page4.drawText(ev.titulo.substring(0, 42), {
+        page4.drawText(ev.titulo.substring(0, 40), {
           x: cx,
           y: dy + dh + 2,
-          size: 7,
+          size: 6.5,
           font: helveticaBold,
           color: rgb(0.1, 0.2, 0.4),
         });
       }
+      currentY -= (maxDrawnH + 18);
     }
 
-    // Dibujar Capturas CÓDIGO en Página 4 (área y: 25..235, x: 71..525)
-    const codAreaY = 25;
-    const codAreaH = 210;
-    const codAreaW = 454;
+    // 7. Sección Código:
+    page4.drawText('Código:', {
+      x: 71,
+      y: currentY,
+      size: 15,
+      font: helveticaBold,
+      color: rgb(0, 0, 0),
+    });
+    currentY -= 15;
+
     const codOnP4 = codeEvidencias.slice(0, 2);
+    overflowCod = codeEvidencias.slice(2);
+
+    const codSlotH = Math.max(Math.min(currentY - 30, slotH), 50);
 
     if (codOnP4.length === 1) {
       const ev = codOnP4[0];
@@ -321,44 +376,43 @@ export async function generateInformeSemanalPDF(appData) {
       if (validDataUrl) {
         const isPng = validDataUrl.startsWith('data:image/png');
         const img = isPng ? await pdfDoc.embedPng(validDataUrl) : await pdfDoc.embedJpg(validDataUrl);
-        const maxW = codAreaW;
-        const maxH = codAreaH - 15;
+        const maxW = 454;
+        const maxH = codSlotH;
         const scale = Math.min(maxW / img.width, maxH / img.height, 1);
         const dw = img.width * scale;
         const dh = img.height * scale;
-        const dx = 71 + (codAreaW - dw) / 2;
-        const dy = codAreaY + (codAreaH - dh) / 2;
+        const dx = 71 + (454 - dw) / 2;
+        const dy = currentY - dh;
 
         page4.drawImage(img, { x: dx, y: dy, width: dw, height: dh });
         page4.drawText(ev.titulo.substring(0, 60), {
           x: dx,
-          y: dy + dh + 3,
-          size: 7.5,
+          y: dy + dh + 2,
+          size: 7,
           font: helveticaBold,
           color: rgb(0.1, 0.2, 0.4),
         });
       }
     } else if (codOnP4.length === 2) {
-      const cellW = (codAreaW - 15) / 2;
-      const cellH = codAreaH;
+      const cellW = (454 - 14) / 2;
       for (let idx = 0; idx < 2; idx++) {
         const ev = codOnP4[idx];
         const validDataUrl = await ensureJpegOrPngDataUrl(ev.dataUrl);
         if (!validDataUrl) continue;
         const isPng = validDataUrl.startsWith('data:image/png');
         const img = isPng ? await pdfDoc.embedPng(validDataUrl) : await pdfDoc.embedJpg(validDataUrl);
-        const scale = Math.min(cellW / img.width, (cellH - 15) / img.height, 1);
+        const scale = Math.min(cellW / img.width, codSlotH / img.height, 1);
         const dw = img.width * scale;
         const dh = img.height * scale;
-        const cx = 71 + idx * (cellW + 15);
+        const cx = 71 + idx * (cellW + 14);
         const dx = cx + (cellW - dw) / 2;
-        const dy = codAreaY + (cellH - dh) / 2;
+        const dy = currentY - dh;
 
         page4.drawImage(img, { x: dx, y: dy, width: dw, height: dh });
-        page4.drawText(ev.titulo.substring(0, 42), {
+        page4.drawText(ev.titulo.substring(0, 40), {
           x: cx,
           y: dy + dh + 2,
-          size: 7,
+          size: 6.5,
           font: helveticaBold,
           color: rgb(0.1, 0.2, 0.4),
         });
@@ -367,118 +421,75 @@ export async function generateInformeSemanalPDF(appData) {
   }
 
   // ==========================================================
-  // PÁGINAS ADICIONALES (CONTINUACIÓN DE TEXTO O MÁS CAPTURAS)
+  // PÁGINAS DE CONTINUACIÓN DE CAPTURAS (SI HAY MÁS DE 4)
   // ==========================================================
-  const overflowWeb = webEvidencias.slice(2);
-  const overflowCod = codeEvidencias.slice(2);
   const remainingImages = [...overflowWeb, ...overflowCod];
 
-  // Si hay texto de proceso desbordado o imágenes restantes:
-  if (overflowProcessLines.length > 0 || remainingImages.length > 0) {
-    let currentRemainingImages = [...remainingImages];
-    let currentProcOverflow = [...overflowProcessLines];
+  if (remainingImages.length > 0) {
+    const itemsPerPage = 4;
+    const numPages = Math.ceil(remainingImages.length / itemsPerPage);
 
-    let pageInsertIndex = 4;
+    for (let pIdx = 0; pIdx < numPages; pIdx++) {
+      const subItems = remainingImages.slice(pIdx * itemsPerPage, (pIdx + 1) * itemsPerPage);
+      const contPage = pdfDoc.insertPage(4 + pIdx, [595.25, 842]);
 
-    while (currentProcOverflow.length > 0 || currentRemainingImages.length > 0) {
-      const contPage = pdfDoc.insertPage(pageInsertIndex, [595.25, 842]);
-      pageInsertIndex++;
+      // Encabezado
+      const bW = 280;
+      const bH = 26;
+      const bX = (595.25 - bW) / 2;
+      contPage.drawRectangle({
+        x: bX,
+        y: 770,
+        width: bW,
+        height: bH,
+        borderColor: rgb(0, 0, 0),
+        borderWidth: 1,
+        color: rgb(1, 1, 1),
+      });
+      contPage.drawText('Esquema, dibujo, capturas (Cont. ' + (pIdx + 1) + ')', {
+        x: bX + 22,
+        y: 778,
+        size: 11.5,
+        font: helveticaBold,
+        color: rgb(0, 0, 0),
+      });
 
-      let availableTopY = 780;
+      // Grilla de 2x2 para las capturas de continuación
+      const gridX = 71;
+      const gridY = 40;
+      const gridW = 454;
+      const gridH = 700;
+      const cols = 2;
+      const rows = 2;
+      const cW = (gridW - 14) / cols;
+      const cH = (gridH - 18) / rows;
 
-      // Si hay texto de proceso pendiente, dibujarlo arriba
-      if (currentProcOverflow.length > 0) {
-        contPage.drawRectangle({
-          x: 71,
-          y: availableTopY - 10,
-          width: 454,
-          height: 25,
-          color: rgb(0.95, 0.95, 0.95),
-        });
-        contPage.drawText('Descripción del Proceso (Continuación):', {
-          x: 75,
-          y: availableTopY - 2,
-          size: 10,
+      for (let sIdx = 0; sIdx < subItems.length; sIdx++) {
+        const ev = subItems[sIdx];
+        const validDataUrl = await ensureJpegOrPngDataUrl(ev.dataUrl);
+        if (!validDataUrl) continue;
+        const isPng = validDataUrl.startsWith('data:image/png');
+        const img = isPng ? await pdfDoc.embedPng(validDataUrl) : await pdfDoc.embedJpg(validDataUrl);
+
+        const col = sIdx % 2;
+        const row = Math.floor(sIdx / 2);
+        const scale = Math.min(cW / img.width, (cH - 16) / img.height, 1);
+        const dw = img.width * scale;
+        const dh = img.height * scale;
+
+        const cx = gridX + col * (cW + 14);
+        const topY = gridY + gridH - (row + 1) * cH;
+        const dx = cx + (cW - dw) / 2;
+        const dy = topY + (cH - dh) / 2;
+
+        contPage.drawImage(img, { x: dx, y: dy, width: dw, height: dh });
+        contPage.drawText(ev.titulo.substring(0, 42), {
+          x: cx,
+          y: dy + dh + 2,
+          size: 6.5,
           font: helveticaBold,
-          color: rgb(0, 0, 0),
+          color: rgb(0.1, 0.2, 0.4),
         });
-        availableTopY -= 30;
-
-        const maxLinesThisPage = currentRemainingImages.length > 0 ? 12 : 55;
-        const linesToDraw = currentProcOverflow.slice(0, maxLinesThisPage);
-        currentProcOverflow = currentProcOverflow.slice(maxLinesThisPage);
-
-        for (let i = 0; i < linesToDraw.length; i++) {
-          contPage.drawText(linesToDraw[i], {
-            x: 75,
-            y: availableTopY - (i * 12),
-            size: 8.5,
-            font: helvetica,
-            color: rgb(0, 0, 0),
-          });
-        }
-        availableTopY -= (linesToDraw.length * 12 + 20);
-      }
-
-      // Si hay imágenes por colocar en esta página
-      if (currentRemainingImages.length > 0 && availableTopY > 200) {
-        contPage.drawRectangle({
-          x: 71,
-          y: availableTopY - 5,
-          width: 454,
-          height: 22,
-          borderColor: rgb(0, 0, 0),
-          borderWidth: 0.75,
-          color: rgb(0.96, 0.96, 0.96),
-        });
-        contPage.drawText('Esquema, dibujo, capturas (Continuación)', {
-          x: 180,
-          y: availableTopY + 2,
-          size: 11,
-          font: helveticaBold,
-          color: rgb(0, 0, 0),
-        });
-        availableTopY -= 25;
-
-        const imagesForThisPage = currentRemainingImages.slice(0, 4);
-        currentRemainingImages = currentRemainingImages.slice(4);
-
-        const gridX = 71;
-        const gridY = 40;
-        const gridW = 454;
-        const gridH = availableTopY - gridY;
-        const cols = 2;
-        const rows = Math.min(2, Math.ceil(imagesForThisPage.length / 2));
-        const cW = (gridW - 15) / cols;
-        const cH = (gridH - 15) / rows;
-
-        for (let sIdx = 0; sIdx < imagesForThisPage.length; sIdx++) {
-          const ev = imagesForThisPage[sIdx];
-          const validDataUrl = await ensureJpegOrPngDataUrl(ev.dataUrl);
-          if (!validDataUrl) continue;
-          const isPng = validDataUrl.startsWith('data:image/png');
-          const img = isPng ? await pdfDoc.embedPng(validDataUrl) : await pdfDoc.embedJpg(validDataUrl);
-
-          const col = sIdx % 2;
-          const row = Math.floor(sIdx / 2);
-          const scale = Math.min(cW / img.width, (cH - 16) / img.height, 1);
-          const dw = img.width * scale;
-          const dh = img.height * scale;
-
-          const cx = gridX + col * (cW + 15);
-          const topY = gridY + gridH - (row + 1) * cH;
-          const dx = cx + (cW - dw) / 2;
-          const dy = topY + (cH - dh) / 2;
-
-          contPage.drawImage(img, { x: dx, y: dy, width: dw, height: dh });
-          contPage.drawText(ev.titulo.substring(0, 42), {
-            x: cx,
-            y: dy + dh + 2,
-            size: 7,
-            font: helveticaBold,
-            color: rgb(0.1, 0.2, 0.4),
-          });
-        }
       }
     }
   }
@@ -509,7 +520,7 @@ export async function generateInformeSemanalPDF(appData) {
   const blob = new Blob([pdfBytes], { type: 'application/pdf' });
   const blobUrl = URL.createObjectURL(blob);
 
-  // Descargar automáticamente y abrir
+  // Descargar automáticamente
   const a = document.createElement('a');
   a.href = blobUrl;
   a.download = 'Informe_Clase_Semana_' + (appData.semanaActual || 1) + '.pdf';
