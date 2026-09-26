@@ -177,9 +177,16 @@ export async function generateInformeSemanalPDF(appData) {
   // ==========================================================
   const page4 = pages[3]; // Página 4
   const act1 = (semData.actividades && semData.actividades[1]) || {};
-  const taskTitle = semData.tituloGlobal || act1.titulo || 'Desarrollo de Aplicaciones Web y Soluciones Informáticas';
   
-  let processDesc = semData.procesoGlobal || '';
+  const liveTitle = (typeof document !== 'undefined' && document.getElementById('ts-titulo')?.value) || '';
+  const liveProc = (typeof document !== 'undefined' && document.getElementById('ts-proceso')?.value) || '';
+
+  const taskTitle = liveTitle.trim() || semData.tituloGlobal || wk.tareaSignificativa?.titulo || act1.titulo || 'Desarrollo de Aplicaciones Web y Soluciones Informáticas';
+  
+  let processDesc = liveProc.trim() || semData.procesoGlobal || wk.tareaSignificativa?.proceso || '';
+  if (!processDesc.trim() && act1.descripcion) {
+    processDesc = act1.descripcion;
+  }
   if (!processDesc.trim()) {
     const actDescs = [];
     for (let i = 1; i <= 4; i++) {
@@ -246,14 +253,38 @@ export async function generateInformeSemanalPDF(appData) {
   });
   curY -= 18;
 
-  // 5. Texto completo de la descripción del proceso
+  // 5. Texto completo de la descripción del proceso con soporte multipágina si es extenso
   const procFontSize = 9;
   const procLineHeight = 13.5;
   const procLines = wrapText(processDesc, helvetica, procFontSize, 454);
 
+  let curProcPage = page4;
+  let procContNum = 1;
+
   for (const line of procLines) {
+    if (curY < 50) {
+      // Si se acaba el espacio vertical, insertar página de continuación limpia antes de la última página
+      curProcPage = pdfDoc.insertPage(pdfDoc.getPageCount() - 1, [595.25, 842]);
+      curProcPage.drawRectangle({
+        x: 40,
+        y: 10,
+        width: 515,
+        height: 770,
+        color: rgb(1, 1, 1),
+      });
+      curY = 770;
+      curProcPage.drawText(`Descripción del proceso (Cont. ${procContNum++}):`, {
+        x: 71,
+        y: curY,
+        size: 11,
+        font: helveticaBold,
+        color: rgb(0, 0, 0),
+      });
+      curY -= 20;
+    }
+
     if (line) {
-      page4.drawText(line, {
+      curProcPage.drawText(line, {
         x: 71,
         y: curY,
         size: procFontSize,
@@ -621,8 +652,11 @@ export async function generateGuiaSimplePDF(appData) {
   curY -= 14;
 
   const act1 = (semData.actividades && semData.actividades[1]) || {};
-  const taskTitle = semData.tituloGlobal || act1.titulo || wk.tareaSignificativa?.titulo || 'Desarrollo de Aplicaciones Web y Soluciones Informáticas';
-  const processDesc = semData.procesoGlobal || act1.descripcion || wk.tareaSignificativa?.proceso || 'Ejecución y desarrollo de las actividades técnicas del seminario.';
+  const liveTitle = (typeof document !== 'undefined' && document.getElementById('ts-titulo')?.value) || '';
+  const liveProc = (typeof document !== 'undefined' && document.getElementById('ts-proceso')?.value) || '';
+
+  const taskTitle = liveTitle.trim() || semData.tituloGlobal || wk.tareaSignificativa?.titulo || act1.titulo || 'Desarrollo de Aplicaciones Web y Soluciones Informáticas';
+  let processDesc = liveProc.trim() || semData.procesoGlobal || wk.tareaSignificativa?.proceso || act1.descripcion || 'Ejecución y desarrollo de las actividades técnicas del seminario.';
 
   const titleLines = wrapText(taskTitle, helveticaBold, 9, 500);
   for (const tLine of titleLines) {

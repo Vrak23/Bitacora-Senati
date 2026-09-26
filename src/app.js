@@ -7,11 +7,13 @@ const STORAGE_KEY = 'senati_bitacora_data';
 
 function getEmptySeminarioData() {
   return {
+    tituloGlobal: '',
+    procesoGlobal: '',
     actividadActual: 1,
     actividades: {
       1: {
-        titulo: 'Semana 1: Desarrollo del módulo PetShop y enrutamiento SPA en Angular',
-        descripcion: 'Creación del proyecto con arquitectura Standalone Components, configuración del enrutamiento SPA en app.routes.ts y maquetación de la navegación responsiva.',
+        titulo: '',
+        descripcion: '',
         urlUi: 'http://localhost:4200/',
         imgUi: '',
         imgCodigo: '',
@@ -19,8 +21,8 @@ function getEmptySeminarioData() {
         extras: []
       },
       2: {
-        titulo: 'Semana 2: Formularios Template-Driven y Validaciones Sintácticas',
-        descripcion: 'Registro de mascotas con enlace bidireccional [(ngModel)] y registro de clientes con validación de expresiones regulares para DNI y email.',
+        titulo: '',
+        descripcion: '',
         urlUi: 'http://localhost:4200/',
         imgUi: '',
         imgCodigo: '',
@@ -28,8 +30,8 @@ function getEmptySeminarioData() {
         extras: []
       },
       3: {
-        titulo: 'Semana 3: Formulario Reactivo de Adopciones y Servicios Asíncronos',
-        descripcion: 'Módulo de solicitudes de adopción implementado con Reactive Forms (FormBuilder) y servicio HTTP para enlace de datos.',
+        titulo: '',
+        descripcion: '',
         urlUi: 'http://localhost:4200/',
         imgUi: '',
         imgCodigo: '',
@@ -37,8 +39,8 @@ function getEmptySeminarioData() {
         extras: []
       },
       4: {
-        titulo: 'Semana 4: Dashboard de Métricas, KPIs y Despliegue en Servidor',
-        descripcion: 'Diseño del panel de control con tarjetas KPI, tabla de historial de solicitudes y verificación de despliegue en servidor local.',
+        titulo: '',
+        descripcion: '',
         urlUi: 'http://localhost:4200/',
         imgUi: '',
         imgCodigo: '',
@@ -423,10 +425,10 @@ function populateForm() {
     });
 
     // Tarea Significativa
-    const semData = appData.informeSeminario;
+    const semData = appData.informeSeminario || {};
     const act1 = getSeminarioActividad(1);
-    document.getElementById('ts-titulo').value = semData.tituloGlobal || act1.titulo || wk.tareaSignificativa?.titulo || '';
-    document.getElementById('ts-proceso').value = semData.procesoGlobal || act1.descripcion || wk.tareaSignificativa?.proceso || '';
+    document.getElementById('ts-titulo').value = semData.tituloGlobal || wk.tareaSignificativa?.titulo || act1.titulo || '';
+    document.getElementById('ts-proceso').value = semData.procesoGlobal || wk.tareaSignificativa?.proceso || act1.descripcion || '';
 
     calcTotalHours();
     renderSeminarioActivityUI();
@@ -477,11 +479,12 @@ function populateForm() {
     calcTotalHours();
   } else if (modo === 'seminario') {
     // MODO INFORME DE CLASE
-    const semData = appData.informeSeminario;
+    const semData = appData.informeSeminario || {};
     const act = getSeminarioActividad(1);
+    const wk = getWeekData(appData.semanaActual || 1);
 
-    document.getElementById('ts-titulo').value = semData.tituloGlobal || act.titulo || 'Desarrollo de Aplicaciones Web y Soluciones Informáticas';
-    document.getElementById('ts-proceso').value = semData.procesoGlobal || act.descripcion || 'Ejecución y desarrollo de las actividades técnicas programadas para la sesión práctica.';
+    document.getElementById('ts-titulo').value = semData.tituloGlobal || act.titulo || wk.tareaSignificativa?.titulo || '';
+    document.getElementById('ts-proceso').value = semData.procesoGlobal || act.descripcion || wk.tareaSignificativa?.proceso || '';
 
     renderSeminarioActivityUI();
   }
@@ -727,23 +730,23 @@ function readFormToCurrentState() {
 
   const modo = appData.modoFormato;
 
+  const tit = document.getElementById('ts-titulo')?.value ?? '';
+  const proc = document.getElementById('ts-proceso')?.value ?? '';
+
   if (modo === 'semanal') {
     const currentSem = appData.semanaActual || 1;
     const wk = getWeekData(currentSem);
 
-    wk.fechaInicio = document.getElementById('meta-fecha-inicio').value;
-    wk.fechaFin = document.getElementById('meta-fecha-fin').value;
+    wk.fechaInicio = document.getElementById('meta-fecha-inicio')?.value || '';
+    wk.fechaFin = document.getElementById('meta-fecha-fin')?.value || '';
 
     const dias = ['lunes', 'martes', 'miercoles', 'jueves', 'viernes', 'sabado'];
     dias.forEach(d => {
       wk.dias[d] = {
-        tarea: document.getElementById(`dia-${d}-tarea`).value,
-        horas: Number(document.getElementById(`dia-${d}-horas`).value) || 0
+        tarea: document.getElementById(`dia-${d}-tarea`)?.value || '',
+        horas: Number(document.getElementById(`dia-${d}-horas`)?.value) || 0
       };
     });
-
-    const tit = document.getElementById('ts-titulo').value;
-    const proc = document.getElementById('ts-proceso').value;
 
     wk.tareaSignificativa = {
       titulo: tit,
@@ -760,32 +763,38 @@ function readFormToCurrentState() {
     const currentSem = getCurrentActiveWeekNum();
     const wk = getWeekData(currentSem);
 
-    wk.fechaInicio = document.getElementById('meta-fecha-inicio').value;
-    wk.fechaFin = document.getElementById('meta-fecha-fin').value;
+    wk.fechaInicio = document.getElementById('meta-fecha-inicio')?.value || '';
+    wk.fechaFin = document.getElementById('meta-fecha-fin')?.value || '';
 
     const dias = ['lunes', 'martes', 'miercoles', 'jueves', 'viernes', 'sabado'];
     dias.forEach(d => {
       wk.dias[d] = {
-        tarea: document.getElementById(`dia-${d}-tarea`).value,
-        horas: Number(document.getElementById(`dia-${d}-horas`).value) || 0
+        tarea: document.getElementById(`dia-${d}-tarea`)?.value || '',
+        horas: Number(document.getElementById(`dia-${d}-horas`)?.value) || 0
       };
     });
 
     const empData = getEmpresaData(appData.quincenaActual);
-    empData.titulo = document.getElementById('ts-titulo').value;
-    empData.proceso = document.getElementById('ts-proceso').value;
-    empData.seguridad = document.getElementById('ts-seguridad').value;
-    empData.herramientas = document.getElementById('ts-herramientas').value;
-    empData.asistencia = document.getElementById('emp-asistencia').value;
-    empData.seguridadEmpresa = document.getElementById('emp-seguridad').value;
-    empData.calidad = document.getElementById('emp-calidad').value;
-    empData.observaciones = document.getElementById('emp-observaciones').value;
+    empData.titulo = tit;
+    empData.proceso = proc;
+    empData.seguridad = document.getElementById('ts-seguridad')?.value || '';
+    empData.herramientas = document.getElementById('ts-herramientas')?.value || '';
+    empData.asistencia = document.getElementById('emp-asistencia')?.value || 'Excelente';
+    empData.seguridadEmpresa = document.getElementById('emp-seguridad')?.value || 'Cumple';
+    empData.calidad = document.getElementById('emp-calidad')?.value || 'Excelente';
+    empData.observaciones = document.getElementById('emp-observaciones')?.value || '';
   } else if (modo === 'seminario') {
     const semData = appData.informeSeminario;
-    semData.tituloGlobal = document.getElementById('ts-titulo').value;
-    semData.procesoGlobal = document.getElementById('ts-proceso').value;
+    semData.tituloGlobal = tit;
+    semData.procesoGlobal = proc;
     semData.seguridadGlobal = '';
     semData.herramientasGlobal = '';
+
+    const currentSem = appData.semanaActual || 1;
+    const wk = getWeekData(currentSem);
+    if (!wk.tareaSignificativa) wk.tareaSignificativa = {};
+    wk.tareaSignificativa.titulo = tit;
+    wk.tareaSignificativa.proceso = proc;
 
     readSeminarioActivityFormToState();
   }
@@ -1404,12 +1413,19 @@ function setupListeners() {
     }
   }
 
-  // Escuchadores de inputs
-  ['sem-act-titulo', 'sem-act-descripcion', 'sem-url-ui', 'sem-tag-codigo'].forEach(id => {
+  // Escuchadores de inputs en vivo
+  [
+    'ts-titulo', 'ts-proceso', 'ts-seguridad', 'ts-herramientas',
+    'sem-act-titulo', 'sem-act-descripcion', 'sem-url-ui', 'sem-tag-codigo',
+    'meta-estudiante', 'meta-matricula', 'meta-carrera', 'meta-semestre',
+    'meta-escuela', 'meta-bloque', 'meta-instructor', 'meta-empresa',
+    'meta-area', 'meta-monitor', 'meta-fecha-inicio', 'meta-fecha-fin'
+  ].forEach(id => {
     const el = document.getElementById(id);
     if (el) {
       el.addEventListener('input', () => {
-        readSeminarioActivityFormToState();
+        readFormToCurrentState();
+        localStorage.setItem(STORAGE_KEY, JSON.stringify(appData));
       });
     }
   });
@@ -1427,7 +1443,15 @@ function setupListeners() {
   // Recalcular horas en inputs
   const dias = ['lunes', 'martes', 'miercoles', 'jueves', 'viernes', 'sabado'];
   dias.forEach(d => {
-    document.getElementById(`dia-${d}-horas`)?.addEventListener('input', calcTotalHours);
+    document.getElementById(`dia-${d}-tarea`)?.addEventListener('input', () => {
+      readFormToCurrentState();
+      localStorage.setItem(STORAGE_KEY, JSON.stringify(appData));
+    });
+    document.getElementById(`dia-${d}-horas`)?.addEventListener('input', () => {
+      calcTotalHours();
+      readFormToCurrentState();
+      localStorage.setItem(STORAGE_KEY, JSON.stringify(appData));
+    });
   });
 }
 

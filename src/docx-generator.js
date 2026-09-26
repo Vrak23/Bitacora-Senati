@@ -136,9 +136,15 @@ export async function generateInformeClaseDOCX(appData) {
   const wk = (appData.semanas && appData.semanas[semNum]) || {};
   const act1 = (semData.actividades && semData.actividades[1]) || {};
 
-  const taskTitle = semData.tituloGlobal || act1.titulo || wk.tareaSignificativa?.titulo || 'Desarrollo de Aplicaciones Web y Soluciones Informáticas';
+  const liveTitle = (typeof document !== 'undefined' && document.getElementById('ts-titulo')?.value) || '';
+  const liveProc = (typeof document !== 'undefined' && document.getElementById('ts-proceso')?.value) || '';
+
+  const taskTitle = liveTitle.trim() || semData.tituloGlobal || wk.tareaSignificativa?.titulo || act1.titulo || 'Desarrollo de Aplicaciones Web y Soluciones Informáticas';
   
-  let processDesc = semData.procesoGlobal || '';
+  let processDesc = liveProc.trim() || semData.procesoGlobal || wk.tareaSignificativa?.proceso || '';
+  if (!processDesc.trim() && act1.descripcion) {
+    processDesc = act1.descripcion;
+  }
   if (!processDesc.trim()) {
     const actDescs = [];
     for (let i = 1; i <= 4; i++) {
@@ -150,7 +156,7 @@ export async function generateInformeClaseDOCX(appData) {
     processDesc = actDescs.join('\n\n');
   }
   if (!processDesc.trim()) {
-    processDesc = wk.tareaSignificativa?.proceso || 'Ejecución y desarrollo de las actividades técnicas programadas para la sesión práctica.';
+    processDesc = 'Ejecución y desarrollo de las actividades técnicas programadas para la sesión práctica.';
   }
 
   const children = [];
