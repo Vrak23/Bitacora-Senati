@@ -13,7 +13,7 @@ import {
   UnderlineType
 } from 'docx';
 
-// Helper to normalize and prepare image for DOCX with guaranteed PNG format & exact dimensions
+// Normalize and prepare image for DOCX with guaranteed PNG format & exact dimensions
 async function prepareImageForDocx(dataUrl) {
   if (!dataUrl || typeof dataUrl !== 'string' || !dataUrl.includes(',')) return null;
 
@@ -25,16 +25,18 @@ async function prepareImageForDocx(dataUrl) {
         const origW = img.naturalWidth || img.width || 800;
         const origH = img.naturalHeight || img.height || 450;
 
-        // Proportional scaling: max width 560px, max height 320px
-        const scale = Math.min(560 / origW, 320 / origH, 1);
+        // Proportional scaling: max width 560px, max height 315px
+        const scale = Math.min(560 / origW, 315 / origH, 1);
         const dw = Math.max(1, Math.round(origW * scale));
         const dh = Math.max(1, Math.round(origH * scale));
 
-        // Create canvas to guarantee standard clean PNG byte stream
+        // Use canvas to guarantee standard clean PNG byte stream
         const canvas = document.createElement('canvas');
         canvas.width = origW;
         canvas.height = origH;
         const ctx = canvas.getContext('2d');
+        ctx.fillStyle = '#ffffff';
+        ctx.fillRect(0, 0, origW, origH);
         ctx.drawImage(img, 0, 0);
 
         const pngDataUrl = canvas.toDataURL('image/png');
@@ -88,18 +90,25 @@ const tableBordersThin = {
   right: { style: BorderStyle.SINGLE, size: 4, color: '000000' }
 };
 
+const tableBordersSubtle = {
+  top: { style: BorderStyle.SINGLE, size: 2, color: 'cbd5e1' },
+  bottom: { style: BorderStyle.SINGLE, size: 2, color: 'cbd5e1' },
+  left: { style: BorderStyle.SINGLE, size: 2, color: 'cbd5e1' },
+  right: { style: BorderStyle.SINGLE, size: 2, color: 'cbd5e1' }
+};
+
 // Page layout constants (A4 in DXA)
 const PAGE_WIDTH_DXA = 11906; // 210mm
 const PAGE_HEIGHT_DXA = 16838; // 297mm
 const MARGIN_DXA = 1440; // 1 inch (25.4mm)
-const CONTENT_WIDTH_DXA = 9020; // 11906 - (1440 * 2) = 9026 ~ 9020
+const CONTENT_WIDTH_DXA = 9020; // 11906 - (1440 * 2) = 9026 ~ 9020 dxa
 
-function createCell(text, widthDxa, isHeader = false, isBold = false, bgHex = null, align = AlignmentType.LEFT) {
+function createCell(text, widthDxa, isHeader = false, isBold = false, bgHex = null, align = AlignmentType.LEFT, borders = tableBordersThin, fontSize = 18) {
   return new TableCell({
     width: { size: widthDxa, type: WidthType.DXA },
     shading: bgHex ? { fill: bgHex } : (isHeader ? { fill: '004b87' } : undefined),
     margins: { top: 100, bottom: 100, left: 120, right: 120 },
-    borders: tableBordersThin,
+    borders: borders,
     children: [
       new Paragraph({
         alignment: align,
@@ -109,7 +118,7 @@ function createCell(text, widthDxa, isHeader = false, isBold = false, bgHex = nu
             text: String(text ?? ''),
             bold: isHeader || isBold,
             color: isHeader ? 'FFFFFF' : '000000',
-            size: isHeader ? 19 : 18,
+            size: isHeader ? (fontSize + 1) : fontSize,
             font: 'Arial'
           })
         ]
@@ -119,15 +128,30 @@ function createCell(text, widthDxa, isHeader = false, isBold = false, bgHex = nu
 }
 
 // =========================================================================
-// 1. INFORME DE CLASE DOCX (Exacto al PDF Oficial SENATI)
+// 1. INFORME DE CLASE DOCX (Exacto al PDF Oficial SENATI: template_informe_clase.pdf)
 // =========================================================================
 export async function generateInformeClaseDOCX(appData) {
   const semData = appData.informeSeminario || {};
-  const wk = (appData.semanas && appData.semanas[appData.semanaActual || 1]) || {};
+  const semNum = appData.semanaActual || 1;
+  const wk = (appData.semanas && appData.semanas[semNum]) || {};
   const act1 = (semData.actividades && semData.actividades[1]) || {};
 
-  const taskTitle = semData.tituloGlobal || act1.titulo || 'Desarrollo de Aplicaciones Web y Soluciones Informáticas';
-  let processDesc = semData.procesoGlobal || act1.descripcion || 'Ejecución y desarrollo de las actividades técnicas programadas para la sesión práctica.';
+  const taskTitle = semData.tituloGlobal || act1.titulo || wk.tareaSignificativa?.titulo || 'Desarrollo de Aplicaciones Web y Soluciones Informáticas';
+  
+  let processDesc = semData.procesoGlobal || '';
+  if (!processDesc.trim()) {
+    const actDescs = [];
+    for (let i = 1; i <= 4; i++) {
+      const a = semData.actividades && semData.actividades[i];
+      if (a && a.descripcion && a.descripcion.trim()) {
+        actDescs.push(a.descripcion.trim());
+      }
+    }
+    processDesc = actDescs.join('\n\n');
+  }
+  if (!processDesc.trim()) {
+    processDesc = wk.tareaSignificativa?.proceso || 'Ejecución y desarrollo de las actividades técnicas programadas para la sesión práctica.';
+  }
 
   const children = [];
 
@@ -137,7 +161,7 @@ export async function generateInformeClaseDOCX(appData) {
   children.push(
     new Paragraph({
       alignment: AlignmentType.CENTER,
-      spacing: { before: 200, after: 100 },
+      spacing: { before: 300, after: 120 },
       children: [
         new TextRun({
           text: 'SERVICIO NACIONAL DE ADIESTRAMIENTO EN TRABAJO INDUSTRIAL',
@@ -150,7 +174,7 @@ export async function generateInformeClaseDOCX(appData) {
     }),
     new Paragraph({
       alignment: AlignmentType.CENTER,
-      spacing: { after: 120 },
+      spacing: { after: 160 },
       children: [
         new TextRun({
           text: 'DIRECCIÓN ZONAL LIMA CALLAO / CFP LIMA',
@@ -163,7 +187,7 @@ export async function generateInformeClaseDOCX(appData) {
     }),
     new Paragraph({
       alignment: AlignmentType.CENTER,
-      spacing: { before: 400, after: 120 },
+      spacing: { before: 600, after: 140 },
       children: [
         new TextRun({
           text: 'CUADERNO DE INFORMES DE FORMACIÓN PRÁCTICA',
@@ -176,7 +200,7 @@ export async function generateInformeClaseDOCX(appData) {
     }),
     new Paragraph({
       alignment: AlignmentType.CENTER,
-      spacing: { after: 600 },
+      spacing: { after: 700 },
       children: [
         new TextRun({
           text: 'PROGRAMA DE FORMACIÓN DUAL — INFORME SEMANAL',
@@ -189,7 +213,7 @@ export async function generateInformeClaseDOCX(appData) {
     }),
     new Paragraph({
       alignment: AlignmentType.CENTER,
-      spacing: { before: 400, after: 60 },
+      spacing: { before: 400, after: 80 },
       children: [
         new TextRun({ text: 'Estudiante: ', bold: true, size: 20, font: 'Arial' }),
         new TextRun({ text: appData.estudiante || 'Rodrigo Daniel Ormeño Llanos', size: 20, font: 'Arial' })
@@ -197,7 +221,7 @@ export async function generateInformeClaseDOCX(appData) {
     }),
     new Paragraph({
       alignment: AlignmentType.CENTER,
-      spacing: { after: 60 },
+      spacing: { after: 80 },
       children: [
         new TextRun({ text: 'ID / Matrícula: ', bold: true, size: 20, font: 'Arial' }),
         new TextRun({ text: appData.matricula || '001681961', size: 20, font: 'Arial' })
@@ -205,7 +229,7 @@ export async function generateInformeClaseDOCX(appData) {
     }),
     new Paragraph({
       alignment: AlignmentType.CENTER,
-      spacing: { after: 60 },
+      spacing: { after: 80 },
       children: [
         new TextRun({ text: 'Carrera: ', bold: true, size: 20, font: 'Arial' }),
         new TextRun({ text: appData.carrera || 'Informática y Desarrollo de Aplicaciones Web', size: 20, font: 'Arial' })
@@ -213,7 +237,7 @@ export async function generateInformeClaseDOCX(appData) {
     }),
     new Paragraph({
       alignment: AlignmentType.CENTER,
-      spacing: { after: 60 },
+      spacing: { after: 80 },
       children: [
         new TextRun({ text: 'Bloque / Grupo: ', bold: true, size: 20, font: 'Arial' }),
         new TextRun({ text: appData.bloque || '406', size: 20, font: 'Arial' })
@@ -221,7 +245,7 @@ export async function generateInformeClaseDOCX(appData) {
     }),
     new Paragraph({
       alignment: AlignmentType.CENTER,
-      spacing: { after: 60 },
+      spacing: { after: 80 },
       children: [
         new TextRun({ text: 'Instructor: ', bold: true, size: 20, font: 'Arial' }),
         new TextRun({ text: appData.instructor || 'Jorge Luque Chambi', size: 20, font: 'Arial' })
@@ -229,7 +253,7 @@ export async function generateInformeClaseDOCX(appData) {
     }),
     new Paragraph({
       alignment: AlignmentType.CENTER,
-      spacing: { after: 300 },
+      spacing: { after: 400 },
       children: [
         new TextRun({ text: 'Semestre: ', bold: true, size: 20, font: 'Arial' }),
         new TextRun({ text: appData.semestre || '4to Ciclo', size: 20, font: 'Arial' })
@@ -257,7 +281,6 @@ export async function generateInformeClaseDOCX(appData) {
     })
   );
 
-  // Column widths: 3157 dxa (35%), 5863 dxa (65%) -> Total = 9020 dxa
   const colW1 = 3157;
   const colW2 = 5863;
 
@@ -322,7 +345,87 @@ export async function generateInformeClaseDOCX(appData) {
   );
 
   // -------------------------------------------------------------
-  // PÁGINA 3: INFORME DE TAREA MÁS SIGNIFICATIVA
+  // PÁGINA 3: PLAN SEMANAL DE TRABAJO (INFORME SEMANAL)
+  // -------------------------------------------------------------
+  children.push(
+    new Paragraph({
+      pageBreakBefore: true,
+      spacing: { before: 100, after: 120 },
+      children: [
+        new TextRun({
+          text: `INFORME SEMANAL — SEMANA N° ${semNum}`,
+          bold: true,
+          size: 22,
+          color: '004b87',
+          font: 'Arial'
+        })
+      ]
+    }),
+    new Paragraph({
+      spacing: { after: 140 },
+      children: [
+        new TextRun({ text: 'PLAN SEMANAL DE ROTACIÓN / TRABAJO:', bold: true, size: 19, font: 'Arial', color: '334155' })
+      ]
+    })
+  );
+
+  const planCols = [1620, 6140, 1260];
+  const diasList = [
+    { key: 'lunes', name: 'LUNES' },
+    { key: 'martes', name: 'MARTES' },
+    { key: 'miercoles', name: 'MIÉRCOLES' },
+    { key: 'jueves', name: 'JUEVES' },
+    { key: 'viernes', name: 'VIERNES' },
+    { key: 'sabado', name: 'SÁBADO' }
+  ];
+
+  let totalHrs = 0;
+  const planRows = [
+    new TableRow({
+      children: [
+        createCell('DÍA', planCols[0], true, true, '004b87', AlignmentType.CENTER),
+        createCell('TAREAS O TRABAJOS EFECTUADOS', planCols[1], true, true, '004b87', AlignmentType.CENTER),
+        createCell('HORAS', planCols[2], true, true, '004b87', AlignmentType.CENTER)
+      ]
+    })
+  ];
+
+  diasList.forEach((d, i) => {
+    const item = wk.dias && wk.dias[d.key.toLowerCase()] ? wk.dias[d.key.toLowerCase()] : { tarea: '', horas: 0 };
+    totalHrs += Number(item.horas) || 0;
+    const bg = i % 2 === 0 ? 'f8fafc' : 'ffffff';
+    planRows.push(
+      new TableRow({
+        children: [
+          createCell(d.name, planCols[0], false, true, bg, AlignmentType.CENTER),
+          createCell(item.tarea || 'Sin actividades registradas.', planCols[1], false, false, bg),
+          createCell(`${item.horas || 0} hrs`, planCols[2], false, false, bg, AlignmentType.CENTER)
+        ]
+      })
+    );
+  });
+
+  planRows.push(
+    new TableRow({
+      children: [
+        createCell('TOTAL HORAS:', planCols[0], false, true, 'e2e8f0', AlignmentType.CENTER),
+        createCell('Horas Formativas Acumuladas en la Semana', planCols[1], false, true, 'e2e8f0'),
+        createCell(`${totalHrs} hrs`, planCols[2], false, true, 'e2e8f0', AlignmentType.CENTER)
+      ]
+    })
+  );
+
+  children.push(
+    new Table({
+      width: { size: CONTENT_WIDTH_DXA, type: WidthType.DXA },
+      columnWidths: planCols,
+      rows: planRows
+    }),
+    new Paragraph({ spacing: { after: 200 } })
+  );
+
+  // -------------------------------------------------------------
+  // PÁGINA 4: INFORME DE TAREA MÁS SIGNIFICATIVA
   // -------------------------------------------------------------
   children.push(
     new Paragraph({
@@ -339,7 +442,7 @@ export async function generateInformeClaseDOCX(appData) {
       ]
     }),
     new Paragraph({
-      spacing: { before: 100, after: 60 },
+      spacing: { before: 80, after: 60 },
       children: [
         new TextRun({ text: 'Tarea más significativa:', bold: true, size: 20, font: 'Arial', color: '000000' })
       ]
@@ -365,7 +468,6 @@ export async function generateInformeClaseDOCX(appData) {
     })
   );
 
-  // Párrafos de la descripción del proceso
   const procParagraphs = processDesc.split('\n');
   for (const para of procParagraphs) {
     if (para.trim()) {
@@ -386,44 +488,70 @@ export async function generateInformeClaseDOCX(appData) {
   }
 
   // -------------------------------------------------------------
-  // PÁGINAS DE CAPTURAS: EXACTO AL PDF (2 CAPTURAS GRANDES POR PÁGINA)
+  // PÁGINAS DE CAPTURAS: 2 CAPTURAS GRANDES POR PÁGINA (PÁGINA 5+)
   // -------------------------------------------------------------
   const webEvidencias = [];
   const codeEvidencias = [];
 
-  if (act1.imgUi) {
-    webEvidencias.push({ titulo: act1.urlUi || 'http://localhost:4200/', dataUrl: act1.imgUi });
-  }
-  if (act1.extras) {
-    act1.extras.forEach(ex => {
-      if (ex.tipo === 'ui' && ex.img) {
-        webEvidencias.push({ titulo: ex.tag || 'http://localhost:4200/', dataUrl: ex.img });
-      }
-    });
-  }
+  if (semData.actividades) {
+    for (let i = 1; i <= 4; i++) {
+      const act = semData.actividades[i];
+      if (!act) continue;
 
-  if (act1.imgCodigo) {
-    codeEvidencias.push({ titulo: act1.tagCodigo || 'codigo.ts', dataUrl: act1.imgCodigo });
-  }
-  if (act1.extras) {
-    act1.extras.forEach(ex => {
-      if (ex.tipo === 'codigo' && ex.img) {
-        codeEvidencias.push({ titulo: ex.tag || 'codigo.ts', dataUrl: ex.img });
+      if (act.imgUi) {
+        webEvidencias.push({
+          tipo: 'ui',
+          titulo: (act.urlUi && act.urlUi.trim()) ? act.urlUi.trim() : 'http://localhost:4200/',
+          dataUrl: act.imgUi
+        });
       }
-    });
+
+      if (act.extras && act.extras.length > 0) {
+        act.extras.forEach(ex => {
+          if (ex.tipo === 'ui' && ex.img) {
+            webEvidencias.push({
+              tipo: 'ui',
+              titulo: (ex.tag && ex.tag.trim()) ? ex.tag.trim() : 'http://localhost:4200/',
+              dataUrl: ex.img
+            });
+          }
+        });
+      }
+
+      if (act.imgCodigo) {
+        codeEvidencias.push({
+          tipo: 'codigo',
+          titulo: (act.tagCodigo && act.tagCodigo.trim()) ? act.tagCodigo.trim() : 'codigo.ts',
+          dataUrl: act.imgCodigo
+        });
+      }
+
+      if (act.extras && act.extras.length > 0) {
+        act.extras.forEach(ex => {
+          if (ex.tipo === 'codigo' && ex.img) {
+            codeEvidencias.push({
+              tipo: 'codigo',
+              titulo: (ex.tag && ex.tag.trim()) ? ex.tag.trim() : 'codigo.ts',
+              dataUrl: ex.img
+            });
+          }
+        });
+      }
+    }
   }
 
   let isFirstCapturasPage = true;
 
-  function addCapturasHeader(pageBreak = true, isCont = false, contNum = 1) {
+  function addCapturasHeaderBox(pageBreak = true, isCont = false, contNum = 1) {
+    const titleText = isCont ? `Esquema, dibujo, capturas (Cont. ${contNum})` : 'HACER ESQUEMA, DIBUJO O DIAGRAMA';
     return [
       new Paragraph({
         pageBreakBefore: pageBreak,
         alignment: AlignmentType.CENTER,
-        spacing: { before: 100, after: 160 },
+        spacing: { before: 80, after: 140 },
         children: [
           new TextRun({
-            text: isCont ? `Esquema, dibujo, capturas (Cont. ${contNum})` : 'HACER ESQUEMA, DIBUJO O DIAGRAMA',
+            text: titleText,
             bold: true,
             size: 21,
             color: '004b87',
@@ -434,42 +562,42 @@ export async function generateInformeClaseDOCX(appData) {
     ];
   }
 
-  // 1. DIBUJAR TODAS LAS CAPTURAS DE WEB (2 POR HOJA)
+  // 1. Capturas Web
   if (webEvidencias.length > 0) {
-    children.push(...addCapturasHeader(true, false));
+    children.push(...addCapturasHeaderBox(true, false));
     isFirstCapturasPage = false;
 
     children.push(
       new Paragraph({
-        spacing: { before: 60, after: 80 },
+        spacing: { before: 40, after: 60 },
         children: [
           new TextRun({ text: 'Web:', bold: true, size: 24, color: '000000', font: 'Arial' })
         ]
       })
     );
 
-    let webSlotsOnPage = 0;
+    let webSlots = 0;
     let webContCount = 1;
 
     for (let i = 0; i < webEvidencias.length; i++) {
       const item = webEvidencias[i];
-      if (webSlotsOnPage >= 2) {
-        children.push(...addCapturasHeader(true, true, webContCount++));
-        webSlotsOnPage = 0;
+      if (webSlots >= 2) {
+        children.push(...addCapturasHeaderBox(true, true, webContCount++));
+        webSlots = 0;
       }
 
       const imgInfo = await prepareImageForDocx(item.dataUrl);
       if (imgInfo) {
         children.push(
           new Paragraph({
-            spacing: { before: 40, after: 30 },
+            spacing: { before: 30, after: 20 },
             children: [
               new TextRun({ text: item.titulo, bold: true, size: 17, color: '1e3a8a', font: 'Arial' })
             ]
           }),
           new Paragraph({
             alignment: AlignmentType.CENTER,
-            spacing: { after: 140 },
+            spacing: { after: 120 },
             children: [
               new ImageRun({
                 data: imgInfo.bytes,
@@ -479,46 +607,46 @@ export async function generateInformeClaseDOCX(appData) {
             ]
           })
         );
-        webSlotsOnPage++;
+        webSlots++;
       }
     }
   }
 
-  // 2. DIBUJAR TODAS LAS CAPTURAS DE CÓDIGO (2 POR HOJA)
+  // 2. Capturas Código
   if (codeEvidencias.length > 0) {
-    children.push(...addCapturasHeader(true, !isFirstCapturasPage, 2));
+    children.push(...addCapturasHeaderBox(true, !isFirstCapturasPage, 2));
 
     children.push(
       new Paragraph({
-        spacing: { before: 60, after: 80 },
+        spacing: { before: 40, after: 60 },
         children: [
           new TextRun({ text: 'Código:', bold: true, size: 24, color: '000000', font: 'Arial' })
         ]
       })
     );
 
-    let codeSlotsOnPage = 0;
+    let codeSlots = 0;
     let codeContCount = 3;
 
     for (let i = 0; i < codeEvidencias.length; i++) {
       const item = codeEvidencias[i];
-      if (codeSlotsOnPage >= 2) {
-        children.push(...addCapturasHeader(true, true, codeContCount++));
-        codeSlotsOnPage = 0;
+      if (codeSlots >= 2) {
+        children.push(...addCapturasHeaderBox(true, true, codeContCount++));
+        codeSlots = 0;
       }
 
       const imgInfo = await prepareImageForDocx(item.dataUrl);
       if (imgInfo) {
         children.push(
           new Paragraph({
-            spacing: { before: 40, after: 30 },
+            spacing: { before: 30, after: 20 },
             children: [
               new TextRun({ text: item.titulo, bold: true, size: 17, color: '1e3a8a', font: 'Arial' })
             ]
           }),
           new Paragraph({
             alignment: AlignmentType.CENTER,
-            spacing: { after: 140 },
+            spacing: { after: 120 },
             children: [
               new ImageRun({
                 data: imgInfo.bytes,
@@ -528,13 +656,13 @@ export async function generateInformeClaseDOCX(appData) {
             ]
           })
         );
-        codeSlotsOnPage++;
+        codeSlots++;
       }
     }
   }
 
   // -------------------------------------------------------------
-  // PÁGINA FINAL: OBSERVACIONES, RECOMENDACIONES Y ASISTENCIA
+  // PÁGINA FINAL: OBSERVACIONES, ASISTENCIA Y CALIFICACIÓN
   // -------------------------------------------------------------
   children.push(
     new Paragraph({
@@ -576,7 +704,7 @@ export async function generateInformeClaseDOCX(appData) {
     })
   );
 
-  // Tabla de Asistencia Lunes a Sábado con X en Viernes (6 columnas iguales: 1503 dxa x 4 + 1504 dxa x 2 = 9020 dxa)
+  // Tabla de Asistencia Lunes a Sábado con X en Viernes (6 columnas: 1503 dxa x 4 + 1504 dxa x 2 = 9020 dxa)
   const asisCols = [1503, 1503, 1503, 1503, 1504, 1504];
   const asistenciaRows = [
     new TableRow({
@@ -606,6 +734,43 @@ export async function generateInformeClaseDOCX(appData) {
       width: { size: CONTENT_WIDTH_DXA, type: WidthType.DXA },
       columnWidths: asisCols,
       rows: asistenciaRows
+    }),
+    new Paragraph({ spacing: { before: 200, after: 120 } })
+  );
+
+  // Tabla de Evaluación y Firmas
+  const evalCols = [4510, 4510];
+  const evalRows = [
+    new TableRow({
+      children: [
+        createCell('EVALUACIÓN DEL INFORME DE TRABAJO SEMANAL', evalCols[0] + evalCols[1], true, true, '004b87', AlignmentType.CENTER)
+      ]
+    }),
+    new TableRow({
+      children: [
+        createCell('NOTA:', evalCols[0], false, true, 'f8fafc'),
+        createCell('', evalCols[1], false, false, 'ffffff')
+      ]
+    }),
+    new TableRow({
+      children: [
+        createCell('FIRMA DEL INSTRUCTOR:', evalCols[0], false, true, 'f8fafc'),
+        createCell('FIRMA DEL APRENDIZ:', evalCols[1], false, true, 'f8fafc')
+      ]
+    }),
+    new TableRow({
+      children: [
+        createCell('', evalCols[0], false, false, 'ffffff'),
+        createCell('', evalCols[1], false, false, 'ffffff')
+      ]
+    })
+  ];
+
+  children.push(
+    new Table({
+      width: { size: CONTENT_WIDTH_DXA, type: WidthType.DXA },
+      columnWidths: evalCols,
+      rows: evalRows
     })
   );
 
@@ -621,11 +786,11 @@ export async function generateInformeClaseDOCX(appData) {
     }]
   });
 
-  return await downloadDocxBlob(doc, 'Informe_Clase_Semanal.docx');
+  return await downloadDocxBlob(doc, `Informe_Clase_Semana_${semNum}.docx`);
 }
 
 // =========================================================================
-// 2. INFORME DE SEMINARIO DOCX (Guía de Práctica / Plan Semanal + 4 Actividades)
+// 2. INFORME DE SEMINARIO DOCX (Exacto al PDF generateGuiaSimplePDF)
 // =========================================================================
 export async function generateInformeSeminarioDOCX(appData) {
   const semData = appData.informeSeminario || {};
@@ -634,88 +799,63 @@ export async function generateInformeSeminarioDOCX(appData) {
   const children = [];
 
   // -------------------------------------------------------------
-  // PÁGINA 1: DATOS, PLAN SEMANAL Y TAREA SIGNIFICATIVA
+  // PÁGINA 1: BANNER, DATOS, PLAN SEMANAL Y TAREA SIGNIFICATIVA
   // -------------------------------------------------------------
+  // Banner institucional azul SENATI
   children.push(
-    new Paragraph({
-      alignment: AlignmentType.CENTER,
-      spacing: { before: 80, after: 60 },
-      children: [
-        new TextRun({
-          text: 'SERVICIO NACIONAL DE ADIESTRAMIENTO EN TRABAJO INDUSTRIAL',
-          bold: true,
-          size: 22,
-          color: '004b87',
-          font: 'Arial'
+    new Table({
+      width: { size: CONTENT_WIDTH_DXA, type: WidthType.DXA },
+      columnWidths: [CONTENT_WIDTH_DXA],
+      rows: [
+        new TableRow({
+          children: [
+            createCell('SENATI — INFORME DE SEMINARIO (GUÍA DE PRÁCTICA)', CONTENT_WIDTH_DXA, true, true, '0f3361', AlignmentType.LEFT, tableBordersThin, 22)
+          ]
         })
       ]
     }),
-    new Paragraph({
-      alignment: AlignmentType.CENTER,
-      spacing: { after: 180 },
-      children: [
-        new TextRun({
-          text: 'INFORME DE SEMINARIO — GUÍA DE PRÁCTICA',
-          bold: true,
-          size: 24,
-          color: '0284c7',
-          font: 'Arial'
-        })
-      ]
-    })
+    new Paragraph({ spacing: { after: 120 } })
   );
 
-  // Ficha de Datos del Estudiante (25% / 75% -> 2255 dxa / 6765 dxa)
+  // Ficha de Datos del Estudiante (Caja compacta 25% / 75% -> 2255 dxa / 6765 dxa)
   const metaCol1 = 2255;
   const metaCol2 = 6765;
 
   const metaRows = [
     new TableRow({
       children: [
-        createCell('Estudiante:', metaCol1, false, true, 'f1f5f9'),
-        createCell(appData.estudiante || 'Rodrigo Daniel Ormeño Llanos', metaCol2, false, true)
+        createCell('Estudiante:', metaCol1, false, true, 'f1f5f9', AlignmentType.LEFT, tableBordersSubtle),
+        createCell(appData.estudiante || 'Rodrigo Daniel Ormeño Llanos', metaCol2, false, true, 'ffffff', AlignmentType.LEFT, tableBordersSubtle)
       ]
     }),
     new TableRow({
       children: [
-        createCell('ID / Matrícula:', metaCol1, false, true, 'f1f5f9'),
-        createCell(appData.matricula || '001681961', metaCol2)
+        createCell('ID / Matrícula:', metaCol1, false, true, 'f1f5f9', AlignmentType.LEFT, tableBordersSubtle),
+        createCell(appData.matricula || '001681961', metaCol2, false, false, 'ffffff', AlignmentType.LEFT, tableBordersSubtle)
       ]
     }),
     new TableRow({
       children: [
-        createCell('Carrera:', metaCol1, false, true, 'f1f5f9'),
-        createCell(appData.carrera || 'Informática y Desarrollo de Aplicaciones Web', metaCol2)
+        createCell('Carrera:', metaCol1, false, true, 'f1f5f9', AlignmentType.LEFT, tableBordersSubtle),
+        createCell(appData.carrera || 'Informática y Desarrollo de Aplicaciones Web', metaCol2, false, false, 'ffffff', AlignmentType.LEFT, tableBordersSubtle)
       ]
     }),
     new TableRow({
       children: [
-        createCell('Semestre / Ciclo:', metaCol1, false, true, 'f1f5f9'),
-        createCell(appData.semestre || '4° Ciclo', metaCol2)
+        createCell('Bloque:', metaCol1, false, true, 'f1f5f9', AlignmentType.LEFT, tableBordersSubtle),
+        createCell(appData.bloque || '406', metaCol2, false, false, 'ffffff', AlignmentType.LEFT, tableBordersSubtle)
       ]
     }),
     new TableRow({
       children: [
-        createCell('CFP / Escuela:', metaCol1, false, true, 'f1f5f9'),
-        createCell(appData.escuela || 'ETI (Escuela de Tecnologías de la Información)', metaCol2)
+        createCell('Instructor:', metaCol1, false, true, 'f1f5f9', AlignmentType.LEFT, tableBordersSubtle),
+        createCell(appData.instructor || 'Jorge Luque Chambi', metaCol2, false, false, 'ffffff', AlignmentType.LEFT, tableBordersSubtle)
       ]
     }),
     new TableRow({
       children: [
-        createCell('Bloque:', metaCol1, false, true, 'f1f5f9'),
-        createCell(appData.bloque || '406', metaCol2)
-      ]
-    }),
-    new TableRow({
-      children: [
-        createCell('Instructor:', metaCol1, false, true, 'f1f5f9'),
-        createCell(appData.instructor || 'Jorge Luque Chambi', metaCol2)
-      ]
-    }),
-    new TableRow({
-      children: [
-        createCell('Periodo:', metaCol1, false, true, 'f1f5f9'),
-        createCell((wk.fechaInicio && wk.fechaFin) ? `${wk.fechaInicio} al ${wk.fechaFin}` : 'Semanal / Mes', metaCol2)
+        createCell('Periodo:', metaCol1, false, true, 'f1f5f9', AlignmentType.LEFT, tableBordersSubtle),
+        createCell((wk.fechaInicio && wk.fechaFin) ? `${wk.fechaInicio} al ${wk.fechaFin}` : 'Semanal / Mes', metaCol2, false, false, 'ffffff', AlignmentType.LEFT, tableBordersSubtle)
       ]
     })
   ];
@@ -732,13 +872,13 @@ export async function generateInformeSeminarioDOCX(appData) {
   // Tabla Plan Semanal de Trabajo (18% / 68% / 14% -> 1620 / 6140 / 1260 dxa)
   children.push(
     new Paragraph({
-      spacing: { before: 140, after: 100 },
+      spacing: { before: 100, after: 80 },
       children: [
         new TextRun({
           text: 'PLAN SEMANAL DE TRABAJO (DÍAS Y TAREAS DESARROLLADAS):',
           bold: true,
-          size: 20,
-          color: '004b87',
+          size: 19,
+          color: '0f3361',
           font: 'Arial'
         })
       ]
@@ -759,9 +899,9 @@ export async function generateInformeSeminarioDOCX(appData) {
   const planRows = [
     new TableRow({
       children: [
-        createCell('DÍA', planCols[0], true),
-        createCell('TAREAS EJECUTADAS / OPERACIONES DE SOFTWARE', planCols[1], true),
-        createCell('HORAS', planCols[2], true, false, null, AlignmentType.CENTER)
+        createCell('DÍA', planCols[0], true, true, '1e4d8c'),
+        createCell('TAREAS EJECUTADAS / OPERACIONES DE SOFTWARE', planCols[1], true, true, '1e4d8c'),
+        createCell('HORAS', planCols[2], true, true, '1e4d8c', AlignmentType.CENTER)
       ]
     })
   ];
@@ -773,9 +913,9 @@ export async function generateInformeSeminarioDOCX(appData) {
     planRows.push(
       new TableRow({
         children: [
-          createCell(d.name, planCols[0], false, true, bg),
-          createCell(item.tarea || 'Sin actividades registradas.', planCols[1], false, false, bg),
-          createCell(`${item.horas || 0} hrs`, planCols[2], false, false, bg, AlignmentType.CENTER)
+          createCell(d.name, planCols[0], false, true, bg, AlignmentType.LEFT, tableBordersSubtle),
+          createCell(item.tarea || 'Sin actividades registradas.', planCols[1], false, false, bg, AlignmentType.LEFT, tableBordersSubtle),
+          createCell(`${item.horas || 0} hrs`, planCols[2], false, false, bg, AlignmentType.CENTER, tableBordersSubtle)
         ]
       })
     );
@@ -784,9 +924,9 @@ export async function generateInformeSeminarioDOCX(appData) {
   planRows.push(
     new TableRow({
       children: [
-        createCell('TOTAL HORAS:', planCols[0], false, true, 'e2e8f0'),
-        createCell('Horas Formativas Acumuladas en la Semana', planCols[1], false, true, 'e2e8f0'),
-        createCell(`${totalHrs} hrs`, planCols[2], false, true, 'e2e8f0', AlignmentType.CENTER)
+        createCell('TOTAL HORAS:', planCols[0], false, true, 'e2e8f0', AlignmentType.LEFT, tableBordersSubtle),
+        createCell('Total Horas Acumuladas en la Semana', planCols[1], false, true, 'e2e8f0', AlignmentType.LEFT, tableBordersSubtle),
+        createCell(`${totalHrs} hrs`, planCols[2], false, true, 'e2e8f0', AlignmentType.CENTER, tableBordersSubtle)
       ]
     })
   );
@@ -807,178 +947,203 @@ export async function generateInformeSeminarioDOCX(appData) {
 
   children.push(
     new Paragraph({
-      spacing: { before: 140, after: 80 },
+      spacing: { before: 100, after: 60 },
       children: [
         new TextRun({
           text: 'TAREA MÁS SIGNIFICATIVA DEL SEMINARIO:',
           bold: true,
-          size: 20,
-          color: '004b87',
+          size: 19,
+          color: '0f3361',
           font: 'Arial'
         })
       ]
     }),
     new Paragraph({
-      spacing: { after: 80 },
+      spacing: { after: 60 },
       children: [
-        new TextRun({ text: 'Denominación: ', bold: true, size: 19, font: 'Arial', color: '0284c7' }),
-        new TextRun({ text: taskTitle, size: 19, font: 'Arial' })
+        new TextRun({ text: taskTitle, bold: true, size: 18, font: 'Arial', color: '1e293b' })
       ]
     }),
     new Paragraph({
-      spacing: { after: 140 },
+      spacing: { before: 60, after: 40 },
       children: [
-        new TextRun({ text: 'Descripción del Proceso Técnico: ', bold: true, size: 19, font: 'Arial', color: '0284c7' }),
-        new TextRun({ text: processDesc, size: 18, font: 'Arial' })
+        new TextRun({ text: 'Descripción del Proceso Técnico:', bold: true, size: 18, font: 'Arial', color: '334155' })
       ]
     })
   );
 
-  // -------------------------------------------------------------
-  // PÁGINA 2+: EVIDENCIAS VISUALES (4 ACTIVIDADES DEL MES)
-  // -------------------------------------------------------------
-  children.push(
-    new Paragraph({
-      pageBreakBefore: true,
-      alignment: AlignmentType.CENTER,
-      spacing: { before: 100, after: 160 },
-      children: [
-        new TextRun({
-          text: 'EVIDENCIAS VISUALES — GUÍA DE PRÁCTICA (4 ACTIVIDADES)',
-          bold: true,
-          size: 22,
-          color: '004b87',
-          font: 'Arial'
+  const pLines = processDesc.split('\n');
+  for (const line of pLines) {
+    if (line.trim()) {
+      children.push(
+        new Paragraph({
+          spacing: { after: 80 },
+          children: [
+            new TextRun({ text: line.trim(), size: 17, font: 'Arial', color: '1e293b' })
+          ]
         })
-      ]
-    })
-  );
+      );
+    }
+  }
 
-  for (let i = 1; i <= 4; i++) {
-    const act = semData.actividades && semData.actividades[i];
-    if (!act) continue;
+  // -------------------------------------------------------------
+  // PÁGINAS DE CAPTURAS: EXACTO AL PDF DE GUÍA SIMPLE (2 POR PÁGINA)
+  // -------------------------------------------------------------
+  const webEvidencias = [];
+  const codeEvidencias = [];
+
+  if (semData.actividades) {
+    for (let i = 1; i <= 4; i++) {
+      const act = semData.actividades[i];
+      if (!act) continue;
+      if (act.imgUi) {
+        webEvidencias.push({ tipo: 'ui', titulo: act.urlUi || 'http://localhost:4200/', dataUrl: act.imgUi });
+      }
+      if (act.extras) {
+        act.extras.forEach(ex => {
+          if (ex.tipo === 'ui' && ex.img) {
+            webEvidencias.push({ tipo: 'ui', titulo: ex.tag || 'http://localhost:4200/', dataUrl: ex.img });
+          }
+        });
+      }
+      if (act.imgCodigo) {
+        codeEvidencias.push({ tipo: 'codigo', titulo: act.tagCodigo || 'codigo.ts', dataUrl: act.imgCodigo });
+      }
+      if (act.extras) {
+        act.extras.forEach(ex => {
+          if (ex.tipo === 'codigo' && ex.img) {
+            codeEvidencias.push({ tipo: 'codigo', titulo: ex.tag || 'codigo.ts', dataUrl: ex.img });
+          }
+        });
+      }
+    }
+  }
+
+  let guidePageNum = 1;
+
+  function addGuideBanner(pageBreak = true) {
+    guidePageNum++;
+    return [
+      new Table({
+        width: { size: CONTENT_WIDTH_DXA, type: WidthType.DXA },
+        columnWidths: [CONTENT_WIDTH_DXA],
+        rows: [
+          new TableRow({
+            children: [
+              createCell(`EVIDENCIAS VISUALES — GUÍA DE PRÁCTICA (Pág. ${guidePageNum})`, CONTENT_WIDTH_DXA, true, true, '0f3361', AlignmentType.LEFT, tableBordersThin, 20)
+            ]
+          })
+        ]
+      }),
+      new Paragraph({ spacing: { after: 120 } })
+    ];
+  }
+
+  let isFirstGuideCapturaPage = true;
+
+  // 1. Web
+  if (webEvidencias.length > 0) {
+    children.push(
+      new Paragraph({ pageBreakBefore: true, spacing: { before: 60 } }),
+      ...addGuideBanner(false)
+    );
+    isFirstGuideCapturaPage = false;
 
     children.push(
       new Paragraph({
-        spacing: { before: 180, after: 60 },
+        spacing: { before: 40, after: 60 },
         children: [
-          new TextRun({
-            text: `Actividad ${i}: ${act.titulo || 'Sin título'}`,
-            bold: true,
-            size: 20,
-            color: '004b87',
-            font: 'Arial'
-          })
+          new TextRun({ text: 'Web (Interfaz de Usuario):', bold: true, size: 22, color: '0f3361', font: 'Arial' })
         ]
       })
     );
 
-    if (act.descripcion && act.descripcion.trim()) {
-      children.push(
-        new Paragraph({
-          spacing: { after: 100 },
-          children: [
-            new TextRun({ text: act.descripcion.trim(), italic: true, size: 18, font: 'Arial', color: '334155' })
-          ]
-        })
-      );
-    }
+    let gWebSlots = 0;
+    for (let i = 0; i < webEvidencias.length; i++) {
+      const item = webEvidencias[i];
+      if (gWebSlots >= 2) {
+        children.push(
+          new Paragraph({ pageBreakBefore: true, spacing: { before: 60 } }),
+          ...addGuideBanner(false)
+        );
+        gWebSlots = 0;
+      }
 
-    // Capturas Web
-    const webList = [];
-    if (act.imgUi) {
-      webList.push({ tag: act.urlUi || 'http://localhost:4200/', img: act.imgUi });
-    }
-    if (act.extras) {
-      act.extras.forEach(ex => {
-        if (ex.tipo === 'ui' && ex.img) {
-          webList.push({ tag: ex.tag || 'http://localhost:4200/', img: ex.img });
-        }
-      });
-    }
-
-    if (webList.length > 0) {
-      children.push(
-        new Paragraph({
-          spacing: { before: 60, after: 40 },
-          children: [
-            new TextRun({ text: 'Web (Interfaz de Usuario):', bold: true, size: 18, color: '0284c7', font: 'Arial' })
-          ]
-        })
-      );
-
-      for (const w of webList) {
-        const imgInfo = await prepareImageForDocx(w.img);
-        if (imgInfo) {
-          children.push(
-            new Paragraph({
-              spacing: { before: 30, after: 30 },
-              children: [
-                new TextRun({ text: w.tag, bold: true, size: 17, color: '1e3a8a', font: 'Arial' })
-              ]
-            }),
-            new Paragraph({
-              alignment: AlignmentType.CENTER,
-              spacing: { after: 120 },
-              children: [
-                new ImageRun({
-                  data: imgInfo.bytes,
-                  transformation: { width: imgInfo.width, height: imgInfo.height },
-                  type: 'png'
-                })
-              ]
-            })
-          );
-        }
+      const imgInfo = await prepareImageForDocx(item.dataUrl);
+      if (imgInfo) {
+        children.push(
+          new Paragraph({
+            spacing: { before: 30, after: 20 },
+            children: [
+              new TextRun({ text: item.titulo, bold: true, size: 17, color: '1e3a8a', font: 'Arial' })
+            ]
+          }),
+          new Paragraph({
+            alignment: AlignmentType.CENTER,
+            spacing: { after: 120 },
+            children: [
+              new ImageRun({
+                data: imgInfo.bytes,
+                transformation: { width: imgInfo.width, height: imgInfo.height },
+                type: 'png'
+              })
+            ]
+          })
+        );
+        gWebSlots++;
       }
     }
+  }
 
-    // Capturas Código
-    const codeList = [];
-    if (act.imgCodigo) {
-      codeList.push({ tag: act.tagCodigo || 'codigo.ts', img: act.imgCodigo });
-    }
-    if (act.extras) {
-      act.extras.forEach(ex => {
-        if (ex.tipo === 'codigo' && ex.img) {
-          codeList.push({ tag: ex.tag || 'codigo.ts', img: ex.img });
-        }
-      });
-    }
+  // 2. Código
+  if (codeEvidencias.length > 0) {
+    children.push(
+      new Paragraph({ pageBreakBefore: true, spacing: { before: 60 } }),
+      ...addGuideBanner(false)
+    );
 
-    if (codeList.length > 0) {
-      children.push(
-        new Paragraph({
-          spacing: { before: 60, after: 40 },
-          children: [
-            new TextRun({ text: 'Código Fuente (CodeSnap):', bold: true, size: 18, color: '0284c7', font: 'Arial' })
-          ]
-        })
-      );
+    children.push(
+      new Paragraph({
+        spacing: { before: 40, after: 60 },
+        children: [
+          new TextRun({ text: 'Código Fuente (CodeSnap):', bold: true, size: 22, color: '0f3361', font: 'Arial' })
+        ]
+      })
+    );
 
-      for (const c of codeList) {
-        const imgInfo = await prepareImageForDocx(c.img);
-        if (imgInfo) {
-          children.push(
-            new Paragraph({
-              spacing: { before: 30, after: 30 },
-              children: [
-                new TextRun({ text: c.tag, bold: true, size: 17, color: '1e3a8a', font: 'Arial' })
-              ]
-            }),
-            new Paragraph({
-              alignment: AlignmentType.CENTER,
-              spacing: { after: 120 },
-              children: [
-                new ImageRun({
-                  data: imgInfo.bytes,
-                  transformation: { width: imgInfo.width, height: imgInfo.height },
-                  type: 'png'
-                })
-              ]
-            })
-          );
-        }
+    let gCodeSlots = 0;
+    for (let i = 0; i < codeEvidencias.length; i++) {
+      const item = codeEvidencias[i];
+      if (gCodeSlots >= 2) {
+        children.push(
+          new Paragraph({ pageBreakBefore: true, spacing: { before: 60 } }),
+          ...addGuideBanner(false)
+        );
+        gCodeSlots = 0;
+      }
+
+      const imgInfo = await prepareImageForDocx(item.dataUrl);
+      if (imgInfo) {
+        children.push(
+          new Paragraph({
+            spacing: { before: 30, after: 20 },
+            children: [
+              new TextRun({ text: item.titulo, bold: true, size: 17, color: '1e3a8a', font: 'Arial' })
+            ]
+          }),
+          new Paragraph({
+            alignment: AlignmentType.CENTER,
+            spacing: { after: 120 },
+            children: [
+              new ImageRun({
+                data: imgInfo.bytes,
+                transformation: { width: imgInfo.width, height: imgInfo.height },
+                type: 'png'
+              })
+            ]
+          })
+        );
+        gCodeSlots++;
       }
     }
   }
@@ -999,7 +1164,7 @@ export async function generateInformeSeminarioDOCX(appData) {
 }
 
 // =========================================================================
-// 3. INFORME DE EMPRESA DOCX (Formato Quincenal / Dual)
+// 3. INFORME DE EMPRESA DOCX (Exacto al formato de Empresa Dual Quincenal)
 // =========================================================================
 export async function generateInformeEmpresaDOCX(appData) {
   const q = appData.quincenaActual || 1;
@@ -1011,33 +1176,20 @@ export async function generateInformeEmpresaDOCX(appData) {
 
   const children = [];
 
+  // Banner superior
   children.push(
-    new Paragraph({
-      alignment: AlignmentType.CENTER,
-      spacing: { before: 100, after: 60 },
-      children: [
-        new TextRun({
-          text: 'SERVICIO NACIONAL DE ADIESTRAMIENTO EN TRABAJO INDUSTRIAL',
-          bold: true,
-          size: 22,
-          color: '004b87',
-          font: 'Arial'
+    new Table({
+      width: { size: CONTENT_WIDTH_DXA, type: WidthType.DXA },
+      columnWidths: [CONTENT_WIDTH_DXA],
+      rows: [
+        new TableRow({
+          children: [
+            createCell(`SENATI — INFORME DE FORMACIÓN PRÁCTICA EN EMPRESA (QUINCENA N° ${q})`, CONTENT_WIDTH_DXA, true, true, '004b87', AlignmentType.LEFT, tableBordersThin, 21)
+          ]
         })
       ]
     }),
-    new Paragraph({
-      alignment: AlignmentType.CENTER,
-      spacing: { after: 180 },
-      children: [
-        new TextRun({
-          text: `INFORME DE FORMACIÓN PRÁCTICA EN EMPRESA — QUINCENA N° ${q}`,
-          bold: true,
-          size: 24,
-          color: '0284c7',
-          font: 'Arial'
-        })
-      ]
-    })
+    new Paragraph({ spacing: { after: 120 } })
   );
 
   // Tabla de Identificación Empresa (30% / 70% -> 2700 / 6320 dxa)
@@ -1047,44 +1199,44 @@ export async function generateInformeEmpresaDOCX(appData) {
   const empIdRows = [
     new TableRow({
       children: [
-        createCell('Estudiante:', empCol1, false, true, 'f1f5f9'),
-        createCell(appData.estudiante || 'Rodrigo Daniel Ormeño Llanos', empCol2, false, true)
+        createCell('Estudiante:', empCol1, false, true, 'f1f5f9', AlignmentType.LEFT, tableBordersSubtle),
+        createCell(appData.estudiante || 'Rodrigo Daniel Ormeño Llanos', empCol2, false, true, 'ffffff', AlignmentType.LEFT, tableBordersSubtle)
       ]
     }),
     new TableRow({
       children: [
-        createCell('Carrera / Semestre:', empCol1, false, true, 'f1f5f9'),
-        createCell(`${appData.carrera || 'Informática y Desarrollo Web'} — ${appData.semestre || '4to'}`, empCol2)
+        createCell('Carrera / Semestre:', empCol1, false, true, 'f1f5f9', AlignmentType.LEFT, tableBordersSubtle),
+        createCell(`${appData.carrera || 'Informática y Desarrollo Web'} — ${appData.semestre || '4to Ciclo'}`, empCol2, false, false, 'ffffff', AlignmentType.LEFT, tableBordersSubtle)
       ]
     }),
     new TableRow({
       children: [
-        createCell('Empresa Formadora:', empCol1, false, true, 'f1f5f9'),
-        createCell(appData.empresa || 'Empresa Patrocinadora', empCol2)
+        createCell('Empresa Formadora:', empCol1, false, true, 'f1f5f9', AlignmentType.LEFT, tableBordersSubtle),
+        createCell(appData.empresa || 'Empresa Patrocinadora', empCol2, false, false, 'ffffff', AlignmentType.LEFT, tableBordersSubtle)
       ]
     }),
     new TableRow({
       children: [
-        createCell('Área de Práctica:', empCol1, false, true, 'f1f5f9'),
-        createCell(appData.area || 'Departamento de TI / Desarrollo', empCol2)
+        createCell('Área de Práctica:', empCol1, false, true, 'f1f5f9', AlignmentType.LEFT, tableBordersSubtle),
+        createCell(appData.area || 'Departamento de TI / Desarrollo de Software', empCol2, false, false, 'ffffff', AlignmentType.LEFT, tableBordersSubtle)
       ]
     }),
     new TableRow({
       children: [
-        createCell('Monitor de Empresa:', empCol1, false, true, 'f1f5f9'),
-        createCell(appData.monitor || 'Monitor Técnico', empCol2)
+        createCell('Monitor de Empresa:', empCol1, false, true, 'f1f5f9', AlignmentType.LEFT, tableBordersSubtle),
+        createCell(appData.monitor || 'Monitor Técnico', empCol2, false, false, 'ffffff', AlignmentType.LEFT, tableBordersSubtle)
       ]
     }),
     new TableRow({
       children: [
-        createCell('Instructor SENATI:', empCol1, false, true, 'f1f5f9'),
-        createCell(appData.instructor || 'Jorge Luque Chambi', empCol2)
+        createCell('Instructor SENATI:', empCol1, false, true, 'f1f5f9', AlignmentType.LEFT, tableBordersSubtle),
+        createCell(appData.instructor || 'Jorge Luque Chambi', empCol2, false, false, 'ffffff', AlignmentType.LEFT, tableBordersSubtle)
       ]
     }),
     new TableRow({
       children: [
-        createCell('Periodo Quincenal:', empCol1, false, true, 'f1f5f9'),
-        createCell(`${wkA.fechaInicio || 'Inicio'} al ${wkB.fechaFin || wkA.fechaFin || 'Fin'}`, empCol2)
+        createCell('Periodo Quincenal:', empCol1, false, true, 'f1f5f9', AlignmentType.LEFT, tableBordersSubtle),
+        createCell(`${wkA.fechaInicio || 'Inicio'} al ${wkB.fechaFin || wkA.fechaFin || 'Fin'}`, empCol2, false, false, 'ffffff', AlignmentType.LEFT, tableBordersSubtle)
       ]
     })
   ];
@@ -1098,7 +1250,7 @@ export async function generateInformeEmpresaDOCX(appData) {
     new Paragraph({ spacing: { after: 180 } })
   );
 
-  // Plan Semanal de Ambas Semanas (1400 / 3200 / 910 / 2600 / 910 dxa = 9020 dxa)
+  // Plan Semanal de Ambas Semanas
   const qCols = [1400, 3200, 910, 2600, 910];
   const dias = ['lunes', 'martes', 'miercoles', 'jueves', 'viernes', 'sabado'];
   const diasNombres = { lunes: 'Lunes', martes: 'Martes', miercoles: 'Miércoles', jueves: 'Jueves', viernes: 'Viernes', sabado: 'Sábado' };
@@ -1109,11 +1261,11 @@ export async function generateInformeEmpresaDOCX(appData) {
   const planQRows = [
     new TableRow({
       children: [
-        createCell('DÍA', qCols[0], true),
-        createCell(`SEMANA ${semA} — TAREAS`, qCols[1], true),
-        createCell('HRS', qCols[2], true, false, null, AlignmentType.CENTER),
-        createCell(`SEMANA ${semB} — TAREAS`, qCols[3], true),
-        createCell('HRS', qCols[4], true, false, null, AlignmentType.CENTER)
+        createCell('DÍA', qCols[0], true, true, '004b87'),
+        createCell(`SEMANA ${semA} — TAREAS`, qCols[1], true, true, '004b87'),
+        createCell('HRS', qCols[2], true, true, '004b87', AlignmentType.CENTER),
+        createCell(`SEMANA ${semB} — TAREAS`, qCols[3], true, true, '004b87'),
+        createCell('HRS', qCols[4], true, true, '004b87', AlignmentType.CENTER)
       ]
     })
   ];
@@ -1128,11 +1280,11 @@ export async function generateInformeEmpresaDOCX(appData) {
     planQRows.push(
       new TableRow({
         children: [
-          createCell(diasNombres[d], qCols[0], false, true, bg),
-          createCell(itemA.tarea || '-', qCols[1], false, false, bg),
-          createCell(`${itemA.horas || 0}h`, qCols[2], false, false, bg, AlignmentType.CENTER),
-          createCell(itemB.tarea || '-', qCols[3], false, false, bg),
-          createCell(`${itemB.horas || 0}h`, qCols[4], false, false, bg, AlignmentType.CENTER)
+          createCell(diasNombres[d], qCols[0], false, true, bg, AlignmentType.LEFT, tableBordersSubtle),
+          createCell(itemA.tarea || '-', qCols[1], false, false, bg, AlignmentType.LEFT, tableBordersSubtle),
+          createCell(`${itemA.horas || 0}h`, qCols[2], false, false, bg, AlignmentType.CENTER, tableBordersSubtle),
+          createCell(itemB.tarea || '-', qCols[3], false, false, bg, AlignmentType.LEFT, tableBordersSubtle),
+          createCell(`${itemB.horas || 0}h`, qCols[4], false, false, bg, AlignmentType.CENTER, tableBordersSubtle)
         ]
       })
     );
@@ -1141,21 +1293,21 @@ export async function generateInformeEmpresaDOCX(appData) {
   planQRows.push(
     new TableRow({
       children: [
-        createCell('TOTALES:', qCols[0], false, true, 'e2e8f0'),
-        createCell(`Total Sem ${semA}: ${totalA} hrs`, qCols[1] + qCols[2], false, true, 'e2e8f0'),
-        createCell(`Total Sem ${semB}: ${totalB} hrs`, qCols[3] + qCols[4], false, true, 'e2e8f0')
+        createCell('TOTALES:', qCols[0], false, true, 'e2e8f0', AlignmentType.LEFT, tableBordersSubtle),
+        createCell(`Total Sem ${semA}: ${totalA} hrs`, qCols[1] + qCols[2], false, true, 'e2e8f0', AlignmentType.LEFT, tableBordersSubtle),
+        createCell(`Total Sem ${semB}: ${totalB} hrs`, qCols[3] + qCols[4], false, true, 'e2e8f0', AlignmentType.LEFT, tableBordersSubtle)
       ]
     })
   );
 
   children.push(
     new Paragraph({
-      spacing: { before: 140, after: 80 },
+      spacing: { before: 100, after: 80 },
       children: [
         new TextRun({
           text: `PLAN DE TRABAJO QUINCENAL (TOTAL: ${totalA + totalB} HORAS)`,
           bold: true,
-          size: 20,
+          size: 19,
           color: '004b87',
           font: 'Arial'
         })
@@ -1172,43 +1324,43 @@ export async function generateInformeEmpresaDOCX(appData) {
   // Tarea de Quincena
   children.push(
     new Paragraph({
-      spacing: { before: 140, after: 80 },
+      spacing: { before: 100, after: 60 },
       children: [
         new TextRun({
           text: 'TAREA / PROYECTO PRINCIPAL DE LA QUINCENA',
           bold: true,
-          size: 20,
+          size: 19,
           color: '004b87',
           font: 'Arial'
         })
       ]
     }),
     new Paragraph({
-      spacing: { after: 80 },
+      spacing: { after: 60 },
       children: [
-        new TextRun({ text: 'Denominación: ', bold: true, size: 19, font: 'Arial', color: '0284c7' }),
-        new TextRun({ text: empData.titulo || 'Desarrollo de Soluciones de Software', size: 19, font: 'Arial' })
-      ]
-    }),
-    new Paragraph({
-      spacing: { after: 100 },
-      children: [
-        new TextRun({ text: 'Descripción del Proceso: ', bold: true, size: 19, font: 'Arial', color: '0284c7' }),
-        new TextRun({ text: empData.proceso || 'Desarrollo de operaciones técnicas en empresa.', size: 18, font: 'Arial' })
+        new TextRun({ text: 'Denominación: ', bold: true, size: 18, font: 'Arial', color: '0284c7' }),
+        new TextRun({ text: empData.titulo || 'Desarrollo de Soluciones de Software', size: 18, font: 'Arial' })
       ]
     }),
     new Paragraph({
       spacing: { after: 80 },
       children: [
-        new TextRun({ text: 'Normas de Seguridad y Ergonomía: ', bold: true, size: 19, font: 'Arial', color: '0284c7' }),
-        new TextRun({ text: empData.seguridad || 'Cumplimiento de pausas activas y postura ergonómica.', size: 18, font: 'Arial' })
+        new TextRun({ text: 'Descripción del Proceso: ', bold: true, size: 18, font: 'Arial', color: '0284c7' }),
+        new TextRun({ text: empData.proceso || 'Desarrollo de operaciones técnicas en empresa.', size: 17, font: 'Arial' })
       ]
     }),
     new Paragraph({
-      spacing: { after: 160 },
+      spacing: { after: 60 },
       children: [
-        new TextRun({ text: 'Herramientas y Software Utilizado: ', bold: true, size: 19, font: 'Arial', color: '0284c7' }),
-        new TextRun({ text: empData.herramientas || 'VS Code, Git, Angular, Node.js, SQL.', size: 18, font: 'Arial' })
+        new TextRun({ text: 'Normas de Seguridad y Ergonomía: ', bold: true, size: 18, font: 'Arial', color: '0284c7' }),
+        new TextRun({ text: empData.seguridad || 'Cumplimiento de pausas activas y postura ergonómica.', size: 17, font: 'Arial' })
+      ]
+    }),
+    new Paragraph({
+      spacing: { after: 140 },
+      children: [
+        new TextRun({ text: 'Herramientas y Software Utilizado: ', bold: true, size: 18, font: 'Arial', color: '0284c7' }),
+        new TextRun({ text: empData.herramientas || 'VS Code, Git, Angular, Node.js, SQL.', size: 17, font: 'Arial' })
       ]
     })
   );
@@ -1218,44 +1370,44 @@ export async function generateInformeEmpresaDOCX(appData) {
   const evalRows = [
     new TableRow({
       children: [
-        createCell('Criterio de Evaluación', evalCols[0], true),
-        createCell('Calificación / Estado', evalCols[1], true)
+        createCell('Criterio de Evaluación', evalCols[0], true, true, '004b87'),
+        createCell('Calificación / Estado', evalCols[1], true, true, '004b87')
       ]
     }),
     new TableRow({
       children: [
-        createCell('Asistencia y Puntualidad:', evalCols[0], false, true, 'f8fafc'),
-        createCell(empData.asistencia || 'Excelente', evalCols[1], false, false, 'f8fafc')
+        createCell('Asistencia y Puntualidad:', evalCols[0], false, true, 'f8fafc', AlignmentType.LEFT, tableBordersSubtle),
+        createCell(empData.asistencia || 'Excelente', evalCols[1], false, false, 'f8fafc', AlignmentType.LEFT, tableBordersSubtle)
       ]
     }),
     new TableRow({
       children: [
-        createCell('Normas de Seguridad y Ergonomía:', evalCols[0], false, true, 'ffffff'),
-        createCell(empData.seguridadEmpresa || 'Cumple', evalCols[1], false, false, 'ffffff')
+        createCell('Normas de Seguridad y Ergonomía:', evalCols[0], false, true, 'ffffff', AlignmentType.LEFT, tableBordersSubtle),
+        createCell(empData.seguridadEmpresa || 'Cumple', evalCols[1], false, false, 'ffffff', AlignmentType.LEFT, tableBordersSubtle)
       ]
     }),
     new TableRow({
       children: [
-        createCell('Desempeño y Calidad Técnica:', evalCols[0], false, true, 'f8fafc'),
-        createCell(empData.calidad || 'Excelente', evalCols[1], false, false, 'f8fafc')
+        createCell('Desempeño y Calidad Técnica:', evalCols[0], false, true, 'f8fafc', AlignmentType.LEFT, tableBordersSubtle),
+        createCell(empData.calidad || 'Excelente', evalCols[1], false, false, 'f8fafc', AlignmentType.LEFT, tableBordersSubtle)
       ]
     }),
     new TableRow({
       children: [
-        createCell('Observaciones del Monitor:', evalCols[0], false, true, 'ffffff'),
-        createCell(empData.observaciones || 'Desempeño destacado y proactivo.', evalCols[1], false, false, 'ffffff')
+        createCell('Observaciones del Monitor:', evalCols[0], false, true, 'ffffff', AlignmentType.LEFT, tableBordersSubtle),
+        createCell(empData.observaciones || 'Desempeño destacado y proactivo.', evalCols[1], false, false, 'ffffff', AlignmentType.LEFT, tableBordersSubtle)
       ]
     })
   ];
 
   children.push(
     new Paragraph({
-      spacing: { before: 160, after: 80 },
+      spacing: { before: 140, after: 80 },
       children: [
         new TextRun({
           text: 'EVALUACIÓN DEL MONITOR DE EMPRESA',
           bold: true,
-          size: 20,
+          size: 19,
           color: '004b87',
           font: 'Arial'
         })
