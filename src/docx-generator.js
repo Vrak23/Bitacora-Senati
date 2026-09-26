@@ -9,38 +9,74 @@ import {
   WidthType,
   BorderStyle,
   AlignmentType,
-  HeadingLevel,
   ImageRun,
-  ShadingType,
   UnderlineType
 } from 'docx';
 
-function dataUrlToUint8Array(dataUrl) {
-  if (!dataUrl || typeof dataUrl !== 'string') return null;
-  const parts = dataUrl.split(',');
-  if (parts.length < 2) return null;
-  const base64 = parts[1];
-  try {
-    const binaryString = atob(base64);
-    const len = binaryString.length;
-    const bytes = new Uint8Array(len);
-    for (let i = 0; i < len; i++) {
-      bytes[i] = binaryString.charCodeAt(i);
-    }
-    return bytes;
-  } catch (e) {
-    console.warn('Error converting dataURL to bytes:', e);
-    return null;
-  }
-}
+// Helper to normalize and prepare image for DOCX with guaranteed PNG format & exact dimensions
+async function prepareImageForDocx(dataUrl) {
+  if (!dataUrl || typeof dataUrl !== 'string' || !dataUrl.includes(',')) return null;
 
-async function getImageDimensions(dataUrl) {
   return new Promise((resolve) => {
     const img = new Image();
+    img.crossOrigin = 'Anonymous';
     img.onload = () => {
-      resolve({ width: img.naturalWidth || img.width || 800, height: img.naturalHeight || img.height || 450 });
+      try {
+        const origW = img.naturalWidth || img.width || 800;
+        const origH = img.naturalHeight || img.height || 450;
+
+        // Proportional scaling: max width 560px, max height 320px
+        const scale = Math.min(560 / origW, 320 / origH, 1);
+        const dw = Math.max(1, Math.round(origW * scale));
+        const dh = Math.max(1, Math.round(origH * scale));
+
+        // Create canvas to guarantee standard clean PNG byte stream
+        const canvas = document.createElement('canvas');
+        canvas.width = origW;
+        canvas.height = origH;
+        const ctx = canvas.getContext('2d');
+        ctx.drawImage(img, 0, 0);
+
+        const pngDataUrl = canvas.toDataURL('image/png');
+        const base64 = pngDataUrl.split(',')[1].replace(/\s/g, '');
+        const binaryString = atob(base64);
+        const len = binaryString.length;
+        const bytes = new Uint8Array(len);
+        for (let i = 0; i < len; i++) {
+          bytes[i] = binaryString.charCodeAt(i);
+        }
+
+        resolve({
+          bytes,
+          type: 'png',
+          width: dw,
+          height: dh
+        });
+      } catch (err) {
+        console.warn('Canvas conversion failed, fallback to raw dataUrl:', err);
+        try {
+          const base64 = dataUrl.split(',')[1].replace(/\s/g, '');
+          const binaryString = atob(base64);
+          const len = binaryString.length;
+          const bytes = new Uint8Array(len);
+          for (let i = 0; i < len; i++) {
+            bytes[i] = binaryString.charCodeAt(i);
+          }
+          resolve({
+            bytes,
+            type: 'png',
+            width: 500,
+            height: 300
+          });
+        } catch (e2) {
+          resolve(null);
+        }
+      }
     };
-    img.onerror = () => resolve({ width: 800, height: 450 });
+    img.onerror = () => {
+      console.warn('Failed to load image for DOCX');
+      resolve(null);
+    };
     img.src = dataUrl;
   });
 }
@@ -52,17 +88,16 @@ const tableBordersThin = {
   right: { style: BorderStyle.SINGLE, size: 4, color: '000000' }
 };
 
-const tableBordersLight = {
-  top: { style: BorderStyle.SINGLE, size: 2, color: 'cbd5e1' },
-  bottom: { style: BorderStyle.SINGLE, size: 2, color: 'cbd5e1' },
-  left: { style: BorderStyle.SINGLE, size: 2, color: 'cbd5e1' },
-  right: { style: BorderStyle.SINGLE, size: 2, color: 'cbd5e1' }
-};
+// Page layout constants (A4 in DXA)
+const PAGE_WIDTH_DXA = 11906; // 210mm
+const PAGE_HEIGHT_DXA = 16838; // 297mm
+const MARGIN_DXA = 1440; // 1 inch (25.4mm)
+const CONTENT_WIDTH_DXA = 9020; // 11906 - (1440 * 2) = 9026 ~ 9020
 
-function createCell(text, widthPct = null, isHeader = false, isBold = false, bgHex = null, align = AlignmentType.LEFT) {
+function createCell(text, widthDxa, isHeader = false, isBold = false, bgHex = null, align = AlignmentType.LEFT) {
   return new TableCell({
-    width: widthPct ? { size: widthPct, type: WidthType.PERCENTAGE } : undefined,
-    shading: bgHex ? { fill: bgHex, type: ShadingType.CLEAR } : (isHeader ? { fill: '004b87', type: ShadingType.CLEAR } : undefined),
+    width: { size: widthDxa, type: WidthType.DXA },
+    shading: bgHex ? { fill: bgHex } : (isHeader ? { fill: '004b87' } : undefined),
     margins: { top: 100, bottom: 100, left: 120, right: 120 },
     borders: tableBordersThin,
     children: [
@@ -222,67 +257,72 @@ export async function generateInformeClaseDOCX(appData) {
     })
   );
 
+  // Column widths: 3157 dxa (35%), 5863 dxa (65%) -> Total = 9020 dxa
+  const colW1 = 3157;
+  const colW2 = 5863;
+
   const idRows = [
     new TableRow({
       children: [
-        createCell('DIRECCIÓN ZONAL / CFP:', 35, false, true, 'f1f5f9'),
-        createCell(appData.escuela || 'ETI (Escuela de Tecnologías de la Información)', 65)
+        createCell('DIRECCIÓN ZONAL / CFP:', colW1, false, true, 'f1f5f9'),
+        createCell(appData.escuela || 'ETI (Escuela de Tecnologías de la Información)', colW2)
       ]
     }),
     new TableRow({
       children: [
-        createCell('CARRERA:', 35, false, true, 'f1f5f9'),
-        createCell(appData.carrera || 'Informática y Desarrollo de Aplicaciones Web', 65)
+        createCell('CARRERA:', colW1, false, true, 'f1f5f9'),
+        createCell(appData.carrera || 'Informática y Desarrollo de Aplicaciones Web', colW2)
       ]
     }),
     new TableRow({
       children: [
-        createCell('APELLIDOS Y NOMBRES:', 35, false, true, 'f1f5f9'),
-        createCell(appData.estudiante || 'Rodrigo Daniel Ormeño Llanos', 65, false, true)
+        createCell('APELLIDOS Y NOMBRES:', colW1, false, true, 'f1f5f9'),
+        createCell(appData.estudiante || 'Rodrigo Daniel Ormeño Llanos', colW2, false, true)
       ]
     }),
     new TableRow({
       children: [
-        createCell('ID / MATRÍCULA:', 35, false, true, 'f1f5f9'),
-        createCell(appData.matricula || '001681961', 65)
+        createCell('ID / MATRÍCULA:', colW1, false, true, 'f1f5f9'),
+        createCell(appData.matricula || '001681961', colW2)
       ]
     }),
     new TableRow({
       children: [
-        createCell('BLOQUE / GRUPO:', 35, false, true, 'f1f5f9'),
-        createCell(appData.bloque || '406', 65)
+        createCell('BLOQUE / GRUPO:', colW1, false, true, 'f1f5f9'),
+        createCell(appData.bloque || '406', colW2)
       ]
     }),
     new TableRow({
       children: [
-        createCell('INSTRUCTOR:', 35, false, true, 'f1f5f9'),
-        createCell(appData.instructor || 'Jorge Luque Chambi', 65)
+        createCell('INSTRUCTOR:', colW1, false, true, 'f1f5f9'),
+        createCell(appData.instructor || 'Jorge Luque Chambi', colW2)
       ]
     }),
     new TableRow({
       children: [
-        createCell('SEMESTRE:', 35, false, true, 'f1f5f9'),
-        createCell(appData.semestre || '4to Ciclo', 65)
+        createCell('SEMESTRE:', colW1, false, true, 'f1f5f9'),
+        createCell(appData.semestre || '4to Ciclo', colW2)
       ]
     }),
     new TableRow({
       children: [
-        createCell('PERIODO / FECHA:', 35, false, true, 'f1f5f9'),
-        createCell((wk.fechaInicio && wk.fechaFin) ? `${wk.fechaInicio} al ${wk.fechaFin}` : 'Viernes lectivo', 65)
+        createCell('PERIODO / FECHA:', colW1, false, true, 'f1f5f9'),
+        createCell((wk.fechaInicio && wk.fechaFin) ? `${wk.fechaInicio} al ${wk.fechaFin}` : 'Viernes lectivo', colW2)
       ]
     })
   ];
 
   children.push(
     new Table({
-      width: { size: 100, type: WidthType.PERCENTAGE },
+      width: { size: CONTENT_WIDTH_DXA, type: WidthType.DXA },
+      columnWidths: [colW1, colW2],
       rows: idRows
     }),
     new Paragraph({ spacing: { after: 300 } })
   );
 
   // -------------------------------------------------------------
-  // PÁGINA 3: INFORME DE TAREA MÁS SIGNIFICATIVA (PÁGINA 4 EN PDF)
+  // PÁGINA 3: INFORME DE TAREA MÁS SIGNIFICATIVA
   // -------------------------------------------------------------
   children.push(
     new Paragraph({
@@ -418,13 +458,8 @@ export async function generateInformeClaseDOCX(appData) {
         webSlotsOnPage = 0;
       }
 
-      const bytes = dataUrlToUint8Array(item.dataUrl);
-      if (bytes) {
-        const dims = await getImageDimensions(item.dataUrl);
-        const scale = Math.min(560 / dims.width, 320 / dims.height, 1);
-        const dw = Math.round(dims.width * scale);
-        const dh = Math.round(dims.height * scale);
-
+      const imgInfo = await prepareImageForDocx(item.dataUrl);
+      if (imgInfo) {
         children.push(
           new Paragraph({
             spacing: { before: 40, after: 30 },
@@ -437,8 +472,9 @@ export async function generateInformeClaseDOCX(appData) {
             spacing: { after: 140 },
             children: [
               new ImageRun({
-                data: bytes,
-                transformation: { width: dw, height: dh }
+                data: imgInfo.bytes,
+                transformation: { width: imgInfo.width, height: imgInfo.height },
+                type: 'png'
               })
             ]
           })
@@ -471,13 +507,8 @@ export async function generateInformeClaseDOCX(appData) {
         codeSlotsOnPage = 0;
       }
 
-      const bytes = dataUrlToUint8Array(item.dataUrl);
-      if (bytes) {
-        const dims = await getImageDimensions(item.dataUrl);
-        const scale = Math.min(560 / dims.width, 320 / dims.height, 1);
-        const dw = Math.round(dims.width * scale);
-        const dh = Math.round(dims.height * scale);
-
+      const imgInfo = await prepareImageForDocx(item.dataUrl);
+      if (imgInfo) {
         children.push(
           new Paragraph({
             spacing: { before: 40, after: 30 },
@@ -490,8 +521,9 @@ export async function generateInformeClaseDOCX(appData) {
             spacing: { after: 140 },
             children: [
               new ImageRun({
-                data: bytes,
-                transformation: { width: dw, height: dh }
+                data: imgInfo.bytes,
+                transformation: { width: imgInfo.width, height: imgInfo.height },
+                type: 'png'
               })
             ]
           })
@@ -544,39 +576,49 @@ export async function generateInformeClaseDOCX(appData) {
     })
   );
 
-  // Tabla de Asistencia Lunes a Sábado con X en Viernes
+  // Tabla de Asistencia Lunes a Sábado con X en Viernes (6 columnas iguales: 1503 dxa x 4 + 1504 dxa x 2 = 9020 dxa)
+  const asisCols = [1503, 1503, 1503, 1503, 1504, 1504];
   const asistenciaRows = [
     new TableRow({
       children: [
-        createCell('LUNES', 16.6, true, true, '004b87', AlignmentType.CENTER),
-        createCell('MARTES', 16.6, true, true, '004b87', AlignmentType.CENTER),
-        createCell('MIÉRCOLES', 16.6, true, true, '004b87', AlignmentType.CENTER),
-        createCell('JUEVES', 16.6, true, true, '004b87', AlignmentType.CENTER),
-        createCell('VIERNES', 16.6, true, true, '004b87', AlignmentType.CENTER),
-        createCell('SÁBADO', 16.6, true, true, '004b87', AlignmentType.CENTER)
+        createCell('LUNES', asisCols[0], true, true, '004b87', AlignmentType.CENTER),
+        createCell('MARTES', asisCols[1], true, true, '004b87', AlignmentType.CENTER),
+        createCell('MIÉRCOLES', asisCols[2], true, true, '004b87', AlignmentType.CENTER),
+        createCell('JUEVES', asisCols[3], true, true, '004b87', AlignmentType.CENTER),
+        createCell('VIERNES', asisCols[4], true, true, '004b87', AlignmentType.CENTER),
+        createCell('SÁBADO', asisCols[5], true, true, '004b87', AlignmentType.CENTER)
       ]
     }),
     new TableRow({
       children: [
-        createCell('', 16.6, false, false, 'ffffff', AlignmentType.CENTER),
-        createCell('', 16.6, false, false, 'ffffff', AlignmentType.CENTER),
-        createCell('', 16.6, false, false, 'ffffff', AlignmentType.CENTER),
-        createCell('', 16.6, false, false, 'ffffff', AlignmentType.CENTER),
-        createCell('X', 16.6, false, true, 'f1f5f9', AlignmentType.CENTER),
-        createCell('', 16.6, false, false, 'ffffff', AlignmentType.CENTER)
+        createCell('', asisCols[0], false, false, 'ffffff', AlignmentType.CENTER),
+        createCell('', asisCols[1], false, false, 'ffffff', AlignmentType.CENTER),
+        createCell('', asisCols[2], false, false, 'ffffff', AlignmentType.CENTER),
+        createCell('', asisCols[3], false, false, 'ffffff', AlignmentType.CENTER),
+        createCell('X', asisCols[4], false, true, 'f1f5f9', AlignmentType.CENTER),
+        createCell('', asisCols[5], false, false, 'ffffff', AlignmentType.CENTER)
       ]
     })
   ];
 
   children.push(
     new Table({
-      width: { size: 100, type: WidthType.PERCENTAGE },
+      width: { size: CONTENT_WIDTH_DXA, type: WidthType.DXA },
+      columnWidths: asisCols,
       rows: asistenciaRows
     })
   );
 
   const doc = new Document({
-    sections: [{ children }]
+    sections: [{
+      properties: {
+        page: {
+          size: { width: PAGE_WIDTH_DXA, height: PAGE_HEIGHT_DXA },
+          margin: { top: MARGIN_DXA, bottom: MARGIN_DXA, left: MARGIN_DXA, right: MARGIN_DXA }
+        }
+      },
+      children
+    }]
   });
 
   return await downloadDocxBlob(doc, 'Informe_Clase_Semanal.docx');
@@ -623,67 +665,71 @@ export async function generateInformeSeminarioDOCX(appData) {
     })
   );
 
-  // Ficha de Datos del Estudiante
+  // Ficha de Datos del Estudiante (25% / 75% -> 2255 dxa / 6765 dxa)
+  const metaCol1 = 2255;
+  const metaCol2 = 6765;
+
   const metaRows = [
     new TableRow({
       children: [
-        createCell('Estudiante:', 25, false, true, 'f1f5f9'),
-        createCell(appData.estudiante || 'Rodrigo Daniel Ormeño Llanos', 75, false, true)
+        createCell('Estudiante:', metaCol1, false, true, 'f1f5f9'),
+        createCell(appData.estudiante || 'Rodrigo Daniel Ormeño Llanos', metaCol2, false, true)
       ]
     }),
     new TableRow({
       children: [
-        createCell('ID / Matrícula:', 25, false, true, 'f1f5f9'),
-        createCell(appData.matricula || '001681961', 75)
+        createCell('ID / Matrícula:', metaCol1, false, true, 'f1f5f9'),
+        createCell(appData.matricula || '001681961', metaCol2)
       ]
     }),
     new TableRow({
       children: [
-        createCell('Carrera:', 25, false, true, 'f1f5f9'),
-        createCell(appData.carrera || 'Informática y Desarrollo de Aplicaciones Web', 75)
+        createCell('Carrera:', metaCol1, false, true, 'f1f5f9'),
+        createCell(appData.carrera || 'Informática y Desarrollo de Aplicaciones Web', metaCol2)
       ]
     }),
     new TableRow({
       children: [
-        createCell('Semestre / Ciclo:', 25, false, true, 'f1f5f9'),
-        createCell(appData.semestre || '4° Ciclo', 75)
+        createCell('Semestre / Ciclo:', metaCol1, false, true, 'f1f5f9'),
+        createCell(appData.semestre || '4° Ciclo', metaCol2)
       ]
     }),
     new TableRow({
       children: [
-        createCell('CFP / Escuela:', 25, false, true, 'f1f5f9'),
-        createCell(appData.escuela || 'ETI (Escuela de Tecnologías de la Información)', 75)
+        createCell('CFP / Escuela:', metaCol1, false, true, 'f1f5f9'),
+        createCell(appData.escuela || 'ETI (Escuela de Tecnologías de la Información)', metaCol2)
       ]
     }),
     new TableRow({
       children: [
-        createCell('Bloque:', 25, false, true, 'f1f5f9'),
-        createCell(appData.bloque || '406', 75)
+        createCell('Bloque:', metaCol1, false, true, 'f1f5f9'),
+        createCell(appData.bloque || '406', metaCol2)
       ]
     }),
     new TableRow({
       children: [
-        createCell('Instructor:', 25, false, true, 'f1f5f9'),
-        createCell(appData.instructor || 'Jorge Luque Chambi', 75)
+        createCell('Instructor:', metaCol1, false, true, 'f1f5f9'),
+        createCell(appData.instructor || 'Jorge Luque Chambi', metaCol2)
       ]
     }),
     new TableRow({
       children: [
-        createCell('Periodo:', 25, false, true, 'f1f5f9'),
-        createCell((wk.fechaInicio && wk.fechaFin) ? `${wk.fechaInicio} al ${wk.fechaFin}` : 'Semanal / Mes', 75)
+        createCell('Periodo:', metaCol1, false, true, 'f1f5f9'),
+        createCell((wk.fechaInicio && wk.fechaFin) ? `${wk.fechaInicio} al ${wk.fechaFin}` : 'Semanal / Mes', metaCol2)
       ]
     })
   ];
 
   children.push(
     new Table({
-      width: { size: 100, type: WidthType.PERCENTAGE },
+      width: { size: CONTENT_WIDTH_DXA, type: WidthType.DXA },
+      columnWidths: [metaCol1, metaCol2],
       rows: metaRows
     }),
     new Paragraph({ spacing: { after: 180 } })
   );
 
-  // Tabla Plan Semanal de Trabajo
+  // Tabla Plan Semanal de Trabajo (18% / 68% / 14% -> 1620 / 6140 / 1260 dxa)
   children.push(
     new Paragraph({
       spacing: { before: 140, after: 100 },
@@ -699,6 +745,7 @@ export async function generateInformeSeminarioDOCX(appData) {
     })
   );
 
+  const planCols = [1620, 6140, 1260];
   const diasList = [
     { key: 'lunes', name: 'Lunes' },
     { key: 'martes', name: 'Martes' },
@@ -712,9 +759,9 @@ export async function generateInformeSeminarioDOCX(appData) {
   const planRows = [
     new TableRow({
       children: [
-        createCell('DÍA', 18, true),
-        createCell('TAREAS EJECUTADAS / OPERACIONES DE SOFTWARE', 68, true),
-        createCell('HORAS', 14, true, false, null, AlignmentType.CENTER)
+        createCell('DÍA', planCols[0], true),
+        createCell('TAREAS EJECUTADAS / OPERACIONES DE SOFTWARE', planCols[1], true),
+        createCell('HORAS', planCols[2], true, false, null, AlignmentType.CENTER)
       ]
     })
   ];
@@ -726,9 +773,9 @@ export async function generateInformeSeminarioDOCX(appData) {
     planRows.push(
       new TableRow({
         children: [
-          createCell(d.name, 18, false, true, bg),
-          createCell(item.tarea || 'Sin actividades registradas.', 68, false, false, bg),
-          createCell(`${item.horas || 0} hrs`, 14, false, false, bg, AlignmentType.CENTER)
+          createCell(d.name, planCols[0], false, true, bg),
+          createCell(item.tarea || 'Sin actividades registradas.', planCols[1], false, false, bg),
+          createCell(`${item.horas || 0} hrs`, planCols[2], false, false, bg, AlignmentType.CENTER)
         ]
       })
     );
@@ -737,16 +784,17 @@ export async function generateInformeSeminarioDOCX(appData) {
   planRows.push(
     new TableRow({
       children: [
-        createCell('TOTAL HORAS:', 18, false, true, 'e2e8f0'),
-        createCell('Horas Formativas Acumuladas en la Semana', 68, false, true, 'e2e8f0'),
-        createCell(`${totalHrs} hrs`, 14, false, true, 'e2e8f0', AlignmentType.CENTER)
+        createCell('TOTAL HORAS:', planCols[0], false, true, 'e2e8f0'),
+        createCell('Horas Formativas Acumuladas en la Semana', planCols[1], false, true, 'e2e8f0'),
+        createCell(`${totalHrs} hrs`, planCols[2], false, true, 'e2e8f0', AlignmentType.CENTER)
       ]
     })
   );
 
   children.push(
     new Table({
-      width: { size: 100, type: WidthType.PERCENTAGE },
+      width: { size: CONTENT_WIDTH_DXA, type: WidthType.DXA },
+      columnWidths: planCols,
       rows: planRows
     }),
     new Paragraph({ spacing: { after: 180 } })
@@ -860,13 +908,8 @@ export async function generateInformeSeminarioDOCX(appData) {
       );
 
       for (const w of webList) {
-        const bytes = dataUrlToUint8Array(w.img);
-        if (bytes) {
-          const dims = await getImageDimensions(w.img);
-          const scale = Math.min(560 / dims.width, 320 / dims.height, 1);
-          const dw = Math.round(dims.width * scale);
-          const dh = Math.round(dims.height * scale);
-
+        const imgInfo = await prepareImageForDocx(w.img);
+        if (imgInfo) {
           children.push(
             new Paragraph({
               spacing: { before: 30, after: 30 },
@@ -879,8 +922,9 @@ export async function generateInformeSeminarioDOCX(appData) {
               spacing: { after: 120 },
               children: [
                 new ImageRun({
-                  data: bytes,
-                  transformation: { width: dw, height: dh }
+                  data: imgInfo.bytes,
+                  transformation: { width: imgInfo.width, height: imgInfo.height },
+                  type: 'png'
                 })
               ]
             })
@@ -913,13 +957,8 @@ export async function generateInformeSeminarioDOCX(appData) {
       );
 
       for (const c of codeList) {
-        const bytes = dataUrlToUint8Array(c.img);
-        if (bytes) {
-          const dims = await getImageDimensions(c.img);
-          const scale = Math.min(560 / dims.width, 320 / dims.height, 1);
-          const dw = Math.round(dims.width * scale);
-          const dh = Math.round(dims.height * scale);
-
+        const imgInfo = await prepareImageForDocx(c.img);
+        if (imgInfo) {
           children.push(
             new Paragraph({
               spacing: { before: 30, after: 30 },
@@ -932,8 +971,9 @@ export async function generateInformeSeminarioDOCX(appData) {
               spacing: { after: 120 },
               children: [
                 new ImageRun({
-                  data: bytes,
-                  transformation: { width: dw, height: dh }
+                  data: imgInfo.bytes,
+                  transformation: { width: imgInfo.width, height: imgInfo.height },
+                  type: 'png'
                 })
               ]
             })
@@ -944,7 +984,15 @@ export async function generateInformeSeminarioDOCX(appData) {
   }
 
   const doc = new Document({
-    sections: [{ children }]
+    sections: [{
+      properties: {
+        page: {
+          size: { width: PAGE_WIDTH_DXA, height: PAGE_HEIGHT_DXA },
+          margin: { top: MARGIN_DXA, bottom: MARGIN_DXA, left: MARGIN_DXA, right: MARGIN_DXA }
+        }
+      },
+      children
+    }]
   });
 
   return await downloadDocxBlob(doc, 'Guia_Informe_Seminario.docx');
@@ -992,61 +1040,66 @@ export async function generateInformeEmpresaDOCX(appData) {
     })
   );
 
-  // Tabla de Identificación Empresa
+  // Tabla de Identificación Empresa (30% / 70% -> 2700 / 6320 dxa)
+  const empCol1 = 2700;
+  const empCol2 = 6320;
+
   const empIdRows = [
     new TableRow({
       children: [
-        createCell('Estudiante:', 30, false, true, 'f1f5f9'),
-        createCell(appData.estudiante || 'Rodrigo Daniel Ormeño Llanos', 70, false, true)
+        createCell('Estudiante:', empCol1, false, true, 'f1f5f9'),
+        createCell(appData.estudiante || 'Rodrigo Daniel Ormeño Llanos', empCol2, false, true)
       ]
     }),
     new TableRow({
       children: [
-        createCell('Carrera / Semestre:', 30, false, true, 'f1f5f9'),
-        createCell(`${appData.carrera || 'Informática y Desarrollo Web'} — ${appData.semestre || '4to'}`, 70)
+        createCell('Carrera / Semestre:', empCol1, false, true, 'f1f5f9'),
+        createCell(`${appData.carrera || 'Informática y Desarrollo Web'} — ${appData.semestre || '4to'}`, empCol2)
       ]
     }),
     new TableRow({
       children: [
-        createCell('Empresa Formadora:', 30, false, true, 'f1f5f9'),
-        createCell(appData.empresa || 'Empresa Patrocinadora', 70)
+        createCell('Empresa Formadora:', empCol1, false, true, 'f1f5f9'),
+        createCell(appData.empresa || 'Empresa Patrocinadora', empCol2)
       ]
     }),
     new TableRow({
       children: [
-        createCell('Área de Práctica:', 30, false, true, 'f1f5f9'),
-        createCell(appData.area || 'Departamento de TI / Desarrollo', 70)
+        createCell('Área de Práctica:', empCol1, false, true, 'f1f5f9'),
+        createCell(appData.area || 'Departamento de TI / Desarrollo', empCol2)
       ]
     }),
     new TableRow({
       children: [
-        createCell('Monitor de Empresa:', 30, false, true, 'f1f5f9'),
-        createCell(appData.monitor || 'Monitor Técnico', 70)
+        createCell('Monitor de Empresa:', empCol1, false, true, 'f1f5f9'),
+        createCell(appData.monitor || 'Monitor Técnico', empCol2)
       ]
     }),
     new TableRow({
       children: [
-        createCell('Instructor SENATI:', 30, false, true, 'f1f5f9'),
-        createCell(appData.instructor || 'Jorge Luque Chambi', 70)
+        createCell('Instructor SENATI:', empCol1, false, true, 'f1f5f9'),
+        createCell(appData.instructor || 'Jorge Luque Chambi', empCol2)
       ]
     }),
     new TableRow({
       children: [
-        createCell('Periodo Quincenal:', 30, false, true, 'f1f5f9'),
-        createCell(`${wkA.fechaInicio || 'Inicio'} al ${wkB.fechaFin || wkA.fechaFin || 'Fin'}`, 70)
+        createCell('Periodo Quincenal:', empCol1, false, true, 'f1f5f9'),
+        createCell(`${wkA.fechaInicio || 'Inicio'} al ${wkB.fechaFin || wkA.fechaFin || 'Fin'}`, empCol2)
       ]
     })
   ];
 
   children.push(
     new Table({
-      width: { size: 100, type: WidthType.PERCENTAGE },
+      width: { size: CONTENT_WIDTH_DXA, type: WidthType.DXA },
+      columnWidths: [empCol1, empCol2],
       rows: empIdRows
     }),
     new Paragraph({ spacing: { after: 180 } })
   );
 
-  // Plan Semanal de Ambas Semanas
+  // Plan Semanal de Ambas Semanas (1400 / 3200 / 910 / 2600 / 910 dxa = 9020 dxa)
+  const qCols = [1400, 3200, 910, 2600, 910];
   const dias = ['lunes', 'martes', 'miercoles', 'jueves', 'viernes', 'sabado'];
   const diasNombres = { lunes: 'Lunes', martes: 'Martes', miercoles: 'Miércoles', jueves: 'Jueves', viernes: 'Viernes', sabado: 'Sábado' };
 
@@ -1056,11 +1109,11 @@ export async function generateInformeEmpresaDOCX(appData) {
   const planQRows = [
     new TableRow({
       children: [
-        createCell('DÍA', 15, true),
-        createCell(`SEMANA ${semA} — TAREAS`, 35, true),
-        createCell('HRS', 10, true, false, null, AlignmentType.CENTER),
-        createCell(`SEMANA ${semB} — TAREAS`, 30, true),
-        createCell('HRS', 10, true, false, null, AlignmentType.CENTER)
+        createCell('DÍA', qCols[0], true),
+        createCell(`SEMANA ${semA} — TAREAS`, qCols[1], true),
+        createCell('HRS', qCols[2], true, false, null, AlignmentType.CENTER),
+        createCell(`SEMANA ${semB} — TAREAS`, qCols[3], true),
+        createCell('HRS', qCols[4], true, false, null, AlignmentType.CENTER)
       ]
     })
   ];
@@ -1075,11 +1128,11 @@ export async function generateInformeEmpresaDOCX(appData) {
     planQRows.push(
       new TableRow({
         children: [
-          createCell(diasNombres[d], 15, false, true, bg),
-          createCell(itemA.tarea || '-', 35, false, false, bg),
-          createCell(`${itemA.horas || 0}h`, 10, false, false, bg, AlignmentType.CENTER),
-          createCell(itemB.tarea || '-', 30, false, false, bg),
-          createCell(`${itemB.horas || 0}h`, 10, false, false, bg, AlignmentType.CENTER)
+          createCell(diasNombres[d], qCols[0], false, true, bg),
+          createCell(itemA.tarea || '-', qCols[1], false, false, bg),
+          createCell(`${itemA.horas || 0}h`, qCols[2], false, false, bg, AlignmentType.CENTER),
+          createCell(itemB.tarea || '-', qCols[3], false, false, bg),
+          createCell(`${itemB.horas || 0}h`, qCols[4], false, false, bg, AlignmentType.CENTER)
         ]
       })
     );
@@ -1088,9 +1141,9 @@ export async function generateInformeEmpresaDOCX(appData) {
   planQRows.push(
     new TableRow({
       children: [
-        createCell('TOTALES:', 15, false, true, 'e2e8f0'),
-        createCell(`Total Sem ${semA}: ${totalA} hrs`, 45, false, true, 'e2e8f0'),
-        createCell(`Total Sem ${semB}: ${totalB} hrs`, 40, false, true, 'e2e8f0')
+        createCell('TOTALES:', qCols[0], false, true, 'e2e8f0'),
+        createCell(`Total Sem ${semA}: ${totalA} hrs`, qCols[1] + qCols[2], false, true, 'e2e8f0'),
+        createCell(`Total Sem ${semB}: ${totalB} hrs`, qCols[3] + qCols[4], false, true, 'e2e8f0')
       ]
     })
   );
@@ -1109,7 +1162,8 @@ export async function generateInformeEmpresaDOCX(appData) {
       ]
     }),
     new Table({
-      width: { size: 100, type: WidthType.PERCENTAGE },
+      width: { size: CONTENT_WIDTH_DXA, type: WidthType.DXA },
+      columnWidths: qCols,
       rows: planQRows
     }),
     new Paragraph({ spacing: { after: 180 } })
@@ -1159,36 +1213,37 @@ export async function generateInformeEmpresaDOCX(appData) {
     })
   );
 
-  // Evaluación del Monitor
+  // Evaluación del Monitor (50% / 50% -> 4510 / 4510 dxa)
+  const evalCols = [4510, 4510];
   const evalRows = [
     new TableRow({
       children: [
-        createCell('Criterio de Evaluación', 50, true),
-        createCell('Calificación / Estado', 50, true)
+        createCell('Criterio de Evaluación', evalCols[0], true),
+        createCell('Calificación / Estado', evalCols[1], true)
       ]
     }),
     new TableRow({
       children: [
-        createCell('Asistencia y Puntualidad:', 50, false, true, 'f8fafc'),
-        createCell(empData.asistencia || 'Excelente', 50, false, false, 'f8fafc')
+        createCell('Asistencia y Puntualidad:', evalCols[0], false, true, 'f8fafc'),
+        createCell(empData.asistencia || 'Excelente', evalCols[1], false, false, 'f8fafc')
       ]
     }),
     new TableRow({
       children: [
-        createCell('Normas de Seguridad y Ergonomía:', 50, false, true, 'ffffff'),
-        createCell(empData.seguridadEmpresa || 'Cumple', 50, false, false, 'ffffff')
+        createCell('Normas de Seguridad y Ergonomía:', evalCols[0], false, true, 'ffffff'),
+        createCell(empData.seguridadEmpresa || 'Cumple', evalCols[1], false, false, 'ffffff')
       ]
     }),
     new TableRow({
       children: [
-        createCell('Desempeño y Calidad Técnica:', 50, false, true, 'f8fafc'),
-        createCell(empData.calidad || 'Excelente', 50, false, false, 'f8fafc')
+        createCell('Desempeño y Calidad Técnica:', evalCols[0], false, true, 'f8fafc'),
+        createCell(empData.calidad || 'Excelente', evalCols[1], false, false, 'f8fafc')
       ]
     }),
     new TableRow({
       children: [
-        createCell('Observaciones del Monitor:', 50, false, true, 'ffffff'),
-        createCell(empData.observaciones || 'Desempeño destacado y proactivo.', 50, false, false, 'ffffff')
+        createCell('Observaciones del Monitor:', evalCols[0], false, true, 'ffffff'),
+        createCell(empData.observaciones || 'Desempeño destacado y proactivo.', evalCols[1], false, false, 'ffffff')
       ]
     })
   ];
@@ -1207,13 +1262,22 @@ export async function generateInformeEmpresaDOCX(appData) {
       ]
     }),
     new Table({
-      width: { size: 100, type: WidthType.PERCENTAGE },
+      width: { size: CONTENT_WIDTH_DXA, type: WidthType.DXA },
+      columnWidths: evalCols,
       rows: evalRows
     })
   );
 
   const doc = new Document({
-    sections: [{ children }]
+    sections: [{
+      properties: {
+        page: {
+          size: { width: PAGE_WIDTH_DXA, height: PAGE_HEIGHT_DXA },
+          margin: { top: MARGIN_DXA, bottom: MARGIN_DXA, left: MARGIN_DXA, right: MARGIN_DXA }
+        }
+      },
+      children
+    }]
   });
 
   return await downloadDocxBlob(doc, `Informe_Empresa_Quincena_${q}.docx`);
