@@ -1,5 +1,6 @@
 import { PLANTILLAS_DEV } from './templates.js';
 import { generateInformeSemanalPDF, generateGuiaSimplePDF } from './pdf-generator.js';
+import { generateReportDOCX } from './docx-generator.js';
 
 // Estado de la aplicación
 const STORAGE_KEY = 'senati_bitacora_data';
@@ -1322,6 +1323,23 @@ function setupListeners() {
           populateForm();
           showToast(`¡Informe de Empresa (Quincena ${q}) limpiado!`);
         }
+      }
+    };
+  }
+
+  const btnDocx = document.getElementById('btn-docx');
+  if (btnDocx) {
+    btnDocx.onclick = async () => {
+      readFormToCurrentState();
+      const modo = appData.modoFormato;
+      const reportName = modo === 'seminario' ? 'Informe de Clase' : (modo === 'empresa' ? 'Informe de Empresa' : 'Informe de Seminario');
+      showToast(`Generando ${reportName} en formato Word (.docx)...`);
+      try {
+        await generateReportDOCX(appData);
+        showToast(`¡${reportName} descargado en DOCX exitosamente! 📄`);
+      } catch (err) {
+        console.error('Error al generar DOCX:', err);
+        showToast('Error al generar el archivo DOCX');
       }
     };
   }
